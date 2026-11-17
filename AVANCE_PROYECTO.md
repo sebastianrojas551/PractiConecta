@@ -82,3 +82,5 @@ El PR #1 fue fusionado a `main` con merge commit `dddae72e2cb72599846a1005dbf2bc
 - **Reproducción:** README documenta pruebas de navegador aisladas; pytest y alembic check se ejecutaron con `docker compose -p practiconecta-p26-tests --env-file ../PractiConecta/.env exec -T backend ...`. No se copiaron secretos ni datos de usuario reales.
 - **Hallazgo pendiente:** npm audit reportó cuatro entradas altas heredadas por picomatch/fdir/tinyglobby/Vite; audit --omit=dev = 0. No se alteraron dependencias de aplicación ni se aplicó el downgrade mayor sugerido. Playwright solo se instaló en un entorno de comprobación aislado.
 - **Límites y siguiente paso:** carta HTML imprimible, sin generador PDF de servidor; respaldo verificado estructuralmente de forma básica; no hay edición/renegociación de propuestas. Revisión del nuevo PR antes de merge. PCT-30 y actualización visual con skills permanecen para etapas posteriores.
+
+- **PR de revisión:** https://github.com/sebastianrojas551/PractiConecta/pull/2 (abierto, sin merge).
