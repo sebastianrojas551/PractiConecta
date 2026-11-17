@@ -8,12 +8,12 @@ Repositorio GitHub: https://github.com/sebastianrojas551/PractiConecta
 Proyecto Jira: PCT, en https://sebastianrojasgarces51-1794941515757.atlassian.net/jira/software/projects/PCT
 Jira contiene siete épicas PCT-4 a PCT-10 y 32 historias PCT-11 a PCT-42. Conserva exactamente la clave de Jira al nombrar ramas, commits y reportes.
 
-## Stack obligatorio
-- Backend: Python + **Django REST Framework** + ORM y migraciones Django.
-- Frontend: **React**, preferentemente con Vite y TypeScript.
-- Datos: **PostgreSQL** persistente (no usar SQLite como reemplazo de la aplicación).
-- Entorno: **Docker** y Docker Compose (frontend, backend, db y volumen persistente).
-No sustituir estas tecnologías por Node/Next.js, Firebase, Supabase, MySQL u otras. Consultar antes de cambios arquitectónicos sustanciales.
+## Stack actual y precaución de integración
+**IMPORTANTE — 17/11/2026:** El equipo ya desarrolló una aplicación en una carpeta local diferente, todavía no integrada a GitHub. Codex informó que el backend existente usa **Python 3.13 + FastAPI + SQLAlchemy + Alembic** y que hay pruebas funcionales; frontend **React 19 + TypeScript + Vite 7**, datos **PostgreSQL 17**, servicios **Docker Compose**. Este dato es un diagnóstico local reportado, aún no verificado mediante el código en este repositorio.
+
+El informe original del curso propuso **Django REST Framework**, pero esa tecnología **NO coincide** con el backend desarrollado. **No migres ni reescribas FastAPI a Django por seguir instrucciones anteriores**. Tampoco crees un backend paralelo. Hasta que el equipo resuelva y documente formalmente la diferencia con su pauta/profesor, conserva el sistema local y sus pruebas, y limita cambios a integración segura o tareas expresamente autorizadas.
+
+No sustituyas React, PostgreSQL ni Docker por alternativas ni alteres la arquitectura existente sin aprobación. Antes de programar, sincroniza el repositorio conservando la aplicación y el historial de documentos. La integración debe hacerse con copia de seguridad, sin incluir `.env`, tokens, `.venv`, `node_modules` o `dist`.
 
 ## Producto y límites
 Usuarios del portal: estudiante, empresa y administrador del servicio; la empresa designa supervisor(es). Estudiantes buscan y postulan; empresas publican, seleccionan y validan horas; estudiantes registran actividades y descargan expediente; empresas evalúan y certifican. La universidad o instituto **NO** es un usuario obligado ni valida dentro de la plataforma. La aceptación empresarial y la autorización académica son pasos diferentes; la aprobación de la institución sigue siendo EXTERNA. No generar falsos certificados académicos, actos oficiales ni seguros escolares.
@@ -50,5 +50,7 @@ Un incremento debe añadir una capacidad integrada que funcione, no solo pantall
 ## Seguridad y buenas prácticas
 Nada de claves privadas, contraseñas, tokens, datos reales de estudiantes o secretos en GitHub. Proveer .env.example, .gitignore, permisos backend, controles de archivos adjuntos y registros de auditoría para horas. Usar datos de demostración ficticios. Priorizar un MVP local reproducible; hosting inferior a $15.000 CLP/mes es una meta por verificar, no una promesa.
 
-## Primera tarea concreta
-Trabajar en **PCT-14 — Crear base reproducible con Docker Compose** una vez revisados los documentos. Proponer estructura de carpetas, crear base Django REST Framework + React + PostgreSQL con Docker Compose, comprobar persistencia y documentar comandos. No afirmar que Docker funciona sin ejecutarlo. Si el entorno no permite iniciar Docker, registrar explícitamente NO EJECUTADO y los pasos que debe probar el equipo.
+## Próxima tarea concreta: incorporar código existente sin sobrescribirlo
+**NO reconstruir PCT-14 desde cero.** Codex informa que la carpeta local ya contiene `compose.yaml`, FastAPI, React y PostgreSQL con servicios saludables; reporta 7 pruebas pytest aprobadas, `alembic check` correcto y compilación frontend correcta. Antes de marcar PCT-14 terminado, conservar el proyecto original, integrarlo en una rama de GitHub, volver a ejecutar y registrar las pruebas, revisar diferencias de documentos y solicitar revisión del equipo. Hasta entonces el código funcional sigue **no verificado desde GitHub**.
+
+Los skills de diseño informados como instalados en la carpeta local se encuentran en `.agents/skills/design-taste-frontend/`, `.agents/skills/impeccable/` y `.agents/skills/emil-design-eng/`. Usarlos después de integrar y respaldar el código, con auditoría visual y pruebas responsive; no alterar backend por objetivos estéticos.
