@@ -44,7 +44,8 @@ export function Opportunities({ account, onExpire }: { account: Account; onExpir
 
   async function submitOffer(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const form = new FormData(event.currentTarget)
+    const formElement = event.currentTarget
+    const form = new FormData(formElement)
     const data: Record<string, string | number | null> = Object.fromEntries(form) as Record<string, string>
     data.hours = Number(data.hours)
     data.vacancies = Number(data.vacancies)
@@ -55,7 +56,7 @@ export function Opportunities({ account, onExpire }: { account: Account; onExpir
     setBusy(true); setError(''); setNotice('')
     try {
       await api('/ofertas', 'POST', data)
-      event.currentTarget.reset()
+      formElement.reset()
       setNotice('Oferta publicada. Ya está disponible para estudiantes.')
       await load()
     } catch (failure) { if (failure instanceof ApiError && failure.status === 401) onExpire(); else setError((failure as Error).message) }
