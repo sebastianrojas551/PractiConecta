@@ -5,6 +5,8 @@ Plataforma web abierta para **buscar, postular, realizar y documentar prácticas
 ## Estado actual
 **La aplicación base está integrada en `main` mediante el [PR #1](https://github.com/sebastianrojas551/PractiConecta/pull/1), fusionado conservando sus commits.** El incremento PCT-26 a PCT-29 sigue en el [PR #2](https://github.com/sebastianrojas551/PractiConecta/pull/2), abierto y sin fusionar. Este rediseño se prepara en `feat/PCT-43-redisenio-integral`, basado en el commit actual del PR #2 para mantener los flujos de propuestas mientras ese incremento espera revisión. No modifica ni fusiona los PR #2 o #3. Resultados reales en `AVANCE_PROYECTO.md`.
 
+El ajuste de PCT-22/PCT-23 en esta misma rama habilita editar ofertas propias desde el panel empresarial y filtrar el catálogo por modalidad con filtros persistidos en la URL. Se comprobó el acceso por rol en Edge, la edición y el catálogo en 390/768/1024/1440 px, la suite backend (50 pruebas), `alembic check` y la compilación frontend. El PR #4 continúa sujeto a la aprobación del PR #2.
+
 ## Equipo
 - Sebastián Rojas
 - Francisco Cartes

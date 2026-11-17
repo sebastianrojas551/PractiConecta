@@ -132,7 +132,7 @@ h1, h2, h3, .font-display { font-family: "Bricolage Grotesque", "DM Sans", sans-
 .catalog-page, .dashboard-page, .proposals-page { min-height: 70vh; padding-top: clamp(2.5rem, 5vw, 4.5rem); padding-bottom: 5rem; }
 .catalog-intro { padding-bottom: 1.7rem; }
 .catalog-intro h1 { margin: 0; font-size: clamp(2.9rem, 6vw, 5rem); letter-spacing: -.07em; line-height: 1; }
-.catalog-filters { display: grid; grid-template-columns: 1fr 1fr auto; align-items: end; gap: .8rem; margin: .7rem 0 1.5rem; padding: 1rem; border: 1px solid var(--line); border-radius: .9rem; background: #fff; }
+.catalog-filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(9rem, 1fr) auto; align-items: end; gap: .8rem; margin: .7rem 0 1.5rem; padding: 1rem; border: 1px solid var(--line); border-radius: .9rem; background: #fff; }
 .publish-form { display: grid; gap: 1rem; margin: 1.5rem 0; padding: clamp(1.2rem, 3vw, 2rem); border: 1px solid var(--line); border-radius: 1rem; background: #fff; }
 .publish-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
 .form-label { display: grid; align-content: start; color: #314b3e; font-size: .83rem; font-weight: 700; }

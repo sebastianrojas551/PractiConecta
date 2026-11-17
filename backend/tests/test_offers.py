@@ -90,6 +90,29 @@ def test_company_and_student_access_are_scoped(clients):
     assert student.post(f"/api/ofertas/{offer['id']}/postulaciones", json={}).status_code == 404
 
 
+def test_offer_update_is_owner_scoped_and_modality_filter_uses_saved_data(clients):
+    company, student = clients
+    register(company, "empresa")
+    offer = company.post("/api/ofertas", json={**OFFER, "modality": "remota"}).json()
+    assert [item["id"] for item in student.get("/api/ofertas?modality=remota").json()] == [offer["id"]]
+    assert student.get("/api/ofertas?modality=presencial").json() == []
+
+    updated = company.put(f"/api/ofertas/{offer['id']}", json={**OFFER, "modality": "híbrida", "status": "publicada"})
+    assert updated.status_code == 200, updated.text
+    assert updated.json()["modality"] == "híbrida"
+    assert student.get("/api/ofertas?modality=remota").json() == []
+    assert [item["id"] for item in student.get("/api/ofertas?modality=híbrida").json()] == [offer["id"]]
+
+    other_company = TestClient(app, base_url="https://testserver", headers={"Origin": origin})
+    try:
+        register(other_company, "empresa")
+        denied = other_company.put(f"/api/ofertas/{offer['id']}", json={**OFFER, "title": "Cambio no autorizado", "status": "publicada"})
+        assert denied.status_code == 404
+        assert company.get("/api/empresa/ofertas").json()[0]["title"] == OFFER["title"]
+    finally:
+        other_company.close()
+
+
 PATHS = {"enviada": [], "en_revision": ["en_revision"], "entrevista": ["entrevista"], "rechazada": ["rechazada"], "retirada": ["retirada"]}
 EXPECTED = {"enviada": ["en_revision", "entrevista", "rechazada"], "en_revision": ["entrevista", "rechazada"], "entrevista": ["rechazada"], "rechazada": [], "retirada": []}
 

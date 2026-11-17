@@ -93,7 +93,9 @@ function OfferDetails({ offer, account, onApply }: { offer: Offer; account: Acco
     {offer.deadline && <p className="border-l-2 border-lime-500 pl-3 text-sm text-muted">Postulaciones hasta el {offer.deadline} inclusive (hora de Santiago).</p>}
     {account?.role === 'estudiante'
       ? <Link className={buttonClass} to="/estudiante#oportunidades">Ir a postular <span aria-hidden="true">↗</span></Link>
-      : <button className={buttonClass} onClick={onApply}>Ingresar para postular <span aria-hidden="true">↗</span></button>}
+      : account?.role === 'empresa'
+        ? <Link className={quietButtonClass} to="/empresa#oportunidades">Volver a mis ofertas</Link>
+        : <button className={buttonClass} onClick={onApply}>Ingresar para postular <span aria-hidden="true">↗</span></button>}
   </div>
 }
 
@@ -107,6 +109,7 @@ export function Opportunities({ account, onExpire }: { account: Account | null; 
   const [applications, setApplications] = useState<Application[]>([])
   const [search, setSearch] = useState(params.get('q') ?? '')
   const [region, setRegion] = useState(params.get('region') ?? '')
+  const [modality, setModality] = useState(params.get('modality') ?? '')
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
@@ -114,15 +117,18 @@ export function Opportunities({ account, onExpire }: { account: Account | null; 
   const [proposing, setProposing] = useState<number | null>(null)
   const [selected, setSelected] = useState<Offer | null>(null)
   const [detail, setDetail] = useState<Offer | null>(null)
-  const [selectedDetail, setSelectedDetail] = useState<Offer | null>(null)
-  useOfferDetails(setSelectedDetail, offers)
+  const [editing, setEditing] = useState<Offer | null>(null)
+  useOfferDetails(setDetail, offers)
 
-  async function load(nextSearch = search, nextRegion = region) {
+  async function load(nextSearch = search, nextRegion = region, nextModality = modality) {
     setLoading(true)
     try {
       const path = company ? '/empresa/ofertas' : '/ofertas'
-      const query = !company ? new URLSearchParams({ q: nextSearch, region: nextRegion }) : null
-      setOffers(await api<Offer[]>(path + (query && (nextSearch || nextRegion) ? '?' + query : '')))
+      const query = new URLSearchParams()
+      if (nextSearch.trim()) query.set('q', nextSearch.trim())
+      if (nextRegion.trim()) query.set('region', nextRegion.trim())
+      if (nextModality) query.set('modality', nextModality)
+      setOffers(await api<Offer[]>(path + (!company && query.size ? '?' + query : '')))
       if (student) setApplications(await api<Application[]>('/estudiante/postulaciones'))
       else setApplications([])
       setError('')
@@ -131,7 +137,13 @@ export function Opportunities({ account, onExpire }: { account: Account | null; 
       else setError((failure as Error).message)
     } finally { setLoading(false) }
   }
-  useEffect(() => { void load(params.get('q') ?? '', params.get('region') ?? '') }, [account?.email, account?.role])
+  useEffect(() => {
+    const nextSearch = params.get('q') ?? ''
+    const nextRegion = params.get('region') ?? ''
+    const nextModality = params.get('modality') ?? ''
+    setSearch(nextSearch); setRegion(nextRegion); setModality(nextModality)
+    void load(nextSearch, nextRegion, nextModality)
+  }, [account?.email, account?.role, params])
   useEffect(() => {
     const refresh = () => { void load(); if (company && selected) void listApplicants(selected) }
     window.addEventListener('applications-updated', refresh)
@@ -153,6 +165,30 @@ export function Opportunities({ account, onExpire }: { account: Account | null; 
       await load()
     } catch (failure) { if (failure instanceof ApiError && failure.status === 401) onExpire(); else setError((failure as Error).message) }
     finally { setBusy(false) }
+  }
+
+  async function updateOffer(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!editing) return
+    const values = Object.fromEntries(new FormData(event.currentTarget)) as Record<string, FormDataEntryValue>
+    const payload = {
+      title: String(values.title).trim(), area: String(values.area).trim(),
+      description: String(values.description).trim(), requirements: String(values.requirements).trim(),
+      city: String(values.city).trim() || null, region: String(values.region).trim() || null,
+      modality: String(values.modality), hours: Number(values.hours), vacancies: Number(values.vacancies),
+      benefits: String(values.benefits).trim() || null, deadline: String(values.deadline) || null,
+      status: editing.status,
+    }
+    setBusy(true); setError(''); setNotice('')
+    try {
+      await api('/ofertas/' + editing.id, 'PUT', payload)
+      setNotice('Los cambios de la oferta se guardaron.')
+      setEditing(null)
+      await load()
+    } catch (failure) {
+      if (failure instanceof ApiError && failure.status === 401) onExpire()
+      else setError((failure as Error).message)
+    } finally { setBusy(false) }
   }
 
   async function apply(id: number) {
@@ -193,8 +229,13 @@ export function Opportunities({ account, onExpire }: { account: Account | null; 
     const next = new URLSearchParams()
     if (search.trim()) next.set('q', search.trim())
     if (region.trim()) next.set('region', region.trim())
+    if (modality) next.set('modality', modality)
     setParams(next, { replace: true })
-    await load(search.trim(), region.trim())
+  }
+
+  function clearFilters() {
+    setSearch(''); setRegion(''); setModality('')
+    setParams({}, { replace: true })
   }
 
   return <>
@@ -214,7 +255,7 @@ export function Opportunities({ account, onExpire }: { account: Account | null; 
           <label className="form-label sm:col-span-2">Requisitos<textarea className={inputClass + ' min-h-20 resize-y'} name="requirements" required maxLength={1500} rows={2} /></label>
           <label className="form-label">Ciudad<input className={inputClass} name="city" maxLength={150} /></label>
           <label className="form-label">Región<input className={inputClass} name="region" maxLength={150} /></label>
-          <label className="form-label">Modalidad<select className={inputClass} name="modality"><option>presencial</option><option>híbrida</option><option>remota</option></select></label>
+          <label className="form-label">Modalidad<select className={inputClass} name="modality"><option value="presencial">Presencial</option><option value="híbrida">Híbrida</option><option value="remota">Remota</option></select></label>
           <label className="form-label">Horas de práctica<input className={inputClass} name="hours" type="number" min="1" required /></label>
           <label className="form-label">Vacantes<input className={inputClass} name="vacancies" type="number" min="1" defaultValue="1" required /></label>
           <label className="form-label">Fecha límite<input className={inputClass} name="deadline" type="date" /></label>
@@ -226,16 +267,17 @@ export function Opportunities({ account, onExpire }: { account: Account | null; 
       {!company && <form className="catalog-filters" onSubmit={filter} role="search">
         <label className="form-label">Palabra clave<input className={inputClass} value={search} onChange={event => setSearch(event.target.value)} placeholder="Cargo, área o requisito" /></label>
         <label className="form-label">Región<input className={inputClass} value={region} onChange={event => setRegion(event.target.value)} placeholder="Ej. Maule" /></label>
+        <label className="form-label">Modalidad<select className={inputClass} value={modality} onChange={event => setModality(event.target.value)}><option value="">Todas las modalidades</option><option value="presencial">Presencial</option><option value="híbrida">Híbrida</option><option value="remota">Remota</option></select></label>
         <button className={buttonClass}>Buscar <span aria-hidden="true">↗</span></button>
       </form>}
 
-      <div className="catalog-results-head"><span>{loading ? 'Buscando…' : `${offers.length} ${offers.length === 1 ? 'oportunidad' : 'oportunidades'}`}</span>{(search || region) && <button className="text-sm font-bold text-pine-800 underline underline-offset-4" onClick={() => { setSearch(''); setRegion(''); setParams({}); void load('', '') }}>Limpiar filtros</button>}</div>
+      <div className="catalog-results-head"><span>{loading ? 'Buscando…' : `${offers.length} ${offers.length === 1 ? 'oportunidad' : 'oportunidades'}`}</span>{(search || region || modality) && <button className="text-sm font-bold text-pine-800 underline underline-offset-4" onClick={clearFilters}>Limpiar filtros</button>}</div>
       {loading ? <LoadingState label="Cargando ofertas…" /> : offers.length ? <div className="offer-list">{offers.map(offer => <OfferRow key={offer.id} offer={offer}
         secondary={company
           ? <button className={quietButtonClass} disabled={busy} onClick={() => void listApplicants(offer)}>Ver postulaciones <span aria-hidden="true">↗</span></button>
           : <button className={quietButtonClass} onClick={() => setDetail(offer)}>Ver detalles <span aria-hidden="true">↗</span></button>}
         action={company
-          ? <div className="flex flex-wrap gap-2">{offer.status === 'publicada' && <button className={quietButtonClass} disabled={busy} onClick={() => void changeStatus(offer, 'pausada')}>Pausar</button>}{offer.status === 'pausada' && <button className={quietButtonClass} disabled={busy} onClick={() => void changeStatus(offer, 'publicada')}>Reactivar</button>}{offer.status !== 'cerrada' && <button className="text-sm font-bold text-stone-500 underline underline-offset-4" disabled={busy} onClick={() => void changeStatus(offer, 'cerrada')}>Cerrar oferta</button>}</div>
+          ? <div className="flex flex-wrap gap-2"><button className={quietButtonClass} disabled={busy} onClick={() => setEditing(offer)}>Editar oferta</button>{offer.status === 'publicada' && <button className={quietButtonClass} disabled={busy} onClick={() => void changeStatus(offer, 'pausada')}>Pausar</button>}{offer.status === 'pausada' && <button className={quietButtonClass} disabled={busy} onClick={() => void changeStatus(offer, 'publicada')}>Reactivar</button>}{offer.status !== 'cerrada' && <button className="text-sm font-bold text-stone-500 underline underline-offset-4" disabled={busy} onClick={() => void changeStatus(offer, 'cerrada')}>Cerrar oferta</button>}</div>
           : student
             ? <button className={buttonClass} disabled={busy || applications.some(item => item.offer_id === offer.id)} onClick={() => void apply(offer.id)}>{applications.some(item => item.offer_id === offer.id) ? 'Ya postulaste' : 'Postular'} <span aria-hidden="true">↗</span></button>
             : <button className={buttonClass} onClick={() => navigate('/ingresar', { state: { from: location } })}>Ingresar para postular <span aria-hidden="true">↗</span></button>} />)}</div>
@@ -247,6 +289,26 @@ export function Opportunities({ account, onExpire }: { account: Account | null; 
     </section>
 
     <Dialog open={!!detail} title={detail?.title ?? 'Detalle de práctica'} onClose={() => setDetail(null)}>{detail && <OfferDetails offer={detail} account={account} onApply={() => void apply(detail.id)} />}</Dialog>
+    <Dialog open={!!editing} title="Editar oferta" onClose={() => setEditing(null)}>
+      {editing && <form className="grid gap-4" onSubmit={updateOffer}>
+        <p className="text-sm leading-6 text-muted">Actualiza los datos de esta oferta. Los cambios se guardan en tu cuenta empresarial.</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="form-label">Título<input className={inputClass} name="title" required maxLength={150} defaultValue={editing.title} /></label>
+          <label className="form-label">Área<input className={inputClass} name="area" required maxLength={150} defaultValue={editing.area} /></label>
+          <label className="form-label sm:col-span-2">Descripción<textarea className={inputClass + ' min-h-24 resize-y'} name="description" required maxLength={1500} rows={3} defaultValue={editing.description} /></label>
+          <label className="form-label sm:col-span-2">Requisitos<textarea className={inputClass + ' min-h-20 resize-y'} name="requirements" required maxLength={1500} rows={2} defaultValue={editing.requirements} /></label>
+          <label className="form-label">Ciudad<input className={inputClass} name="city" maxLength={150} defaultValue={editing.city ?? ''} /></label>
+          <label className="form-label">Región<input className={inputClass} name="region" maxLength={150} defaultValue={editing.region ?? ''} /></label>
+          <label className="form-label">Modalidad<select className={inputClass} name="modality" defaultValue={editing.modality}><option value="presencial">Presencial</option><option value="híbrida">Híbrida</option><option value="remota">Remota</option></select></label>
+          <label className="form-label">Horas de práctica<input className={inputClass} name="hours" type="number" min="1" required defaultValue={editing.hours} /></label>
+          <label className="form-label">Vacantes<input className={inputClass} name="vacancies" type="number" min="1" required defaultValue={editing.vacancies} /></label>
+          <label className="form-label">Fecha límite<input className={inputClass} name="deadline" type="date" defaultValue={editing.deadline ?? ''} /></label>
+          <label className="form-label sm:col-span-2">Beneficios<textarea className={inputClass + ' min-h-20 resize-y'} name="benefits" maxLength={1500} rows={2} defaultValue={editing.benefits ?? ''} /></label>
+        </div>
+        {error && <Notice kind="error">{error}</Notice>}
+        <div className="flex flex-wrap gap-3"><button className={buttonClass} disabled={busy}>{busy ? 'Guardando…' : 'Guardar cambios'} <span aria-hidden="true">↗</span></button><button className={quietButtonClass} type="button" onClick={() => setEditing(null)}>Cancelar</button></div>
+      </form>}
+    </Dialog>
     <Dialog open={!!selected} title="Postulaciones recibidas" onClose={() => setSelected(null)}>
       {selected && <div className="space-y-5"><div><p className="text-xs font-bold uppercase tracking-[.14em] text-pine-800">{selected.title}</p><h3 className="mt-2 font-display text-2xl font-semibold text-pine-950">Candidaturas</h3></div>
         {applications.length ? <div className="divide-y divide-stone-200">{applications.map(item => <article className="space-y-4 py-5 first:pt-0 last:pb-0" key={item.id}><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-bold text-pine-950">{item.student_name}</p><p className="mt-1 text-sm text-muted">{item.message || 'Sin mensaje adicional'}</p></div><StatusBadge value={item.status} label={statusLabels[item.status] ?? item.status} /></div><div className="flex flex-wrap items-center gap-3"><label className="sr-only" htmlFor={`status-${item.id}`}>Estado de postulación de {item.student_name}</label><select id={`status-${item.id}`} className="rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm" disabled={!item.allowed_statuses.length} value={item.status} onChange={event => void updateApplication(item.id, event.target.value)}><option value={item.status}>{statusLabels[item.status] ?? item.status}</option>{item.allowed_statuses.map(status => <option key={status} value={status}>{statusLabels[status] ?? status}</option>)}</select>{item.can_propose && <button className={buttonClass} onClick={() => setProposing(item.id)}>Preparar propuesta <span aria-hidden="true">↗</span></button>}</div></article>)}</div>
