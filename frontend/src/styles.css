@@ -1,0 +1,60 @@
+:root {
+  font: 16px/1.5 Inter, system-ui, sans-serif;
+  color: #152923;
+  background: #eef3ef;
+  --accent: #135746;
+  --border: #a9bbb1;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+.shell { max-width: 58rem; width: calc(100% - 2rem); margin-inline: auto; }
+.topbar { color: #fff; background: #133b31; }
+.topbar-inner { min-height: 4.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.brand { font-size: 1.15rem; font-weight: 750; }
+main { padding-block: clamp(1.5rem, 6vw, 4rem); }
+.card { background: #fff; border: 1px solid #d4e0d8; border-radius: 1rem; padding: clamp(1.25rem, 5vw, 2.5rem); }
+.auth { max-width: 29rem; margin-inline: auto; }
+h1 { line-height: 1.2; font-size: clamp(1.75rem, 5vw, 2.4rem); margin: 0 0 1.25rem; letter-spacing: -.035em; }
+.account-email { margin: -0.75rem 0 1.5rem; color: #415b51; overflow-wrap: anywhere; }
+fieldset { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: 1rem; }
+.profile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.full { grid-column: 1 / -1; }
+label { display: grid; gap: .3rem; align-content: start; font-weight: 600; }
+input, select, textarea, button { font: inherit; }
+input, select, textarea { border: 1px solid var(--border); border-radius: .45rem; padding: .6rem .75rem; width: 100%; min-height: 2.8rem; background: #fff; color: inherit; font-weight: normal; }
+textarea { resize: vertical; }
+button { min-height: 2.75rem; border: 1px solid transparent; border-radius: .5rem; padding: .55rem 1rem; cursor: pointer; background: var(--accent); color: #fff; font-weight: 650; }
+button:hover { background: #0d4235; }
+button:disabled { opacity: .65; cursor: wait; }
+.secondary { background: transparent; border-color: #a4c5b6; }
+.text-button { color: var(--accent); background: transparent; text-decoration: underline; margin-top: .6rem; padding-inline: 0; }
+.text-button:hover { background: transparent; color: #0d4235; }
+:focus-visible { outline: 3px solid #367eeb; outline-offset: 3px; }
+.hint { margin: -.75rem 0 0; color: #415b51; font-size: .9rem; }
+.error { color: #8c2426; background: #fff0ee; border-radius: .5rem; padding: .75rem; margin-block: 0 1rem; }
+fieldset .error { margin: 0; }
+.actions { display: flex; align-items: center; flex-wrap: wrap; gap: 1rem; margin-top: 1.5rem; }
+@media (max-width: 36rem) { .profile-grid { grid-template-columns: 1fr; } }
+
+.app-nav { display: flex; gap: 1.2rem; margin: 0 auto 1rem; max-width: 58rem; width: calc(100% - 2rem); }
+.app-nav a { color: #135746; font-weight: 650; }
+#perfil, #ofertas { scroll-margin-top: 1rem; margin-bottom: 1rem; }
+.opportunities { margin-top: 1rem; }
+.eyebrow { text-transform: uppercase; font-size: .8rem; letter-spacing: .08em; color: #537065; font-weight: 700; }
+.section-head, .offer-title, .application-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.section-head h1 { margin-bottom: 0; }
+.offer-form, .filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; padding-block: 1.5rem; border-bottom: 1px solid #d4e0d8; }
+.offer-form h2, .filters button { grid-column: 1 / -1; }
+.filters { grid-template-columns: 1fr 1fr auto; align-items: end; }
+.offer-list { display: grid; gap: 1rem; padding-top: 1rem; }
+.offer { border: 1px solid #d4e0d8; border-radius: .75rem; padding: 1.25rem; }
+.offer h2, .my-applications h2 { font-size: 1.2rem; margin: 0; }
+.offer-title p, .application-row p { margin: .25rem 0; color: #415b51; }
+.meta { color: #415b51; font-size: .92rem; }
+.pill { display: inline-flex; border-radius: 99px; padding: .2rem .7rem; background: #e5eee8; color: #15513f; font-size: .85rem; white-space: nowrap; }
+.success { padding: .75rem; border-radius: .5rem; color: #15513f; background: #e5f5eb; }
+.my-applications { margin-top: 2rem; }
+.application-row { padding: .85rem 0; border-bottom: 1px solid #d4e0d8; flex-wrap: wrap; }
+.application-row select { width: auto; }
+@media (max-width: 36rem) { .offer-form, .filters { grid-template-columns: 1fr; } .offer-form h2, .filters button { grid-column: auto; } .offer-title { align-items: start; } }

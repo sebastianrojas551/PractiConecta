@@ -1,0 +1,11 @@
+.env
+.venv/
+.local-check/
+__pycache__/
+.pytest_cache/
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Skills locales: pendientes de verificar licencias y contenido distribuible.
+.agents/skills/
