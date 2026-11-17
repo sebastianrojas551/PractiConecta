@@ -11,7 +11,7 @@ Plataforma web abierta para **buscar, postular, realizar y documentar prácticas
 - Nicolás Aburto (pendiente de incorporación a Jira)
 
 ## Tecnologías obligatorias
-- Python + Django REST Framework — backend
+- Python + FastAPI + SQLAlchemy + Alembic — backend **existente según auditoría local de Codex**. Django REST Framework era la propuesta original del informe; decisión formal pendiente.
 - React — frontend
 - PostgreSQL — base de datos
 - Docker + Docker Compose — servicios y entorno reproducible
