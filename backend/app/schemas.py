@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints, field_validator, model_validator
 
 
 Role = Literal["estudiante", "empresa"]
@@ -135,6 +135,8 @@ class ApplicationView(BaseModel):
     company_name: str
     student_name: str
     allowed_statuses: list[str]
+    can_propose: bool
+    can_withdraw: bool
 
 
 class ApplicationEventView(BaseModel):
@@ -143,3 +145,25 @@ class ApplicationEventView(BaseModel):
     comment: str | None
     created_at: datetime
     actor_email: EmailStr
+
+
+class ProposalInput(Input):
+    start_date: date
+    end_date: date
+    hours: int = Field(gt=0, le=2147483647, strict=True)
+    conditions: LongText
+
+    @model_validator(mode="after")
+    def valid_dates(self):
+        if self.end_date < self.start_date:
+            raise ValueError("La fecha de término debe ser posterior o igual al inicio.")
+        return self
+
+
+class ProposalResponse(Input):
+    status: Literal["aceptada", "rechazada"]
+
+
+class AcademicInput(Input):
+    status: Literal["pendiente", "en_tramite", "autorizacion_informada", "no_requerida", "denegada"]
+    note: LongText | None = None

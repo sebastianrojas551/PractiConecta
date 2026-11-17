@@ -58,3 +58,6 @@ fieldset .error { margin: 0; }
 .application-row { padding: .85rem 0; border-bottom: 1px solid #d4e0d8; flex-wrap: wrap; }
 .application-row select { width: auto; }
 @media (max-width: 36rem) { .offer-form, .filters { grid-template-columns: 1fr; } .offer-form h2, .filters button { grid-column: auto; } .offer-title { align-items: start; } }
+
+.card .secondary { color: var(--accent); }
+.card .secondary:hover { color: #fff; }

@@ -1,3 +1,6 @@
+from pathlib import Path
+
+Path(".local-check").mkdir(exist_ok=True)
 from playwright.sync_api import sync_playwright, expect
 from uuid import uuid4
 suffix=uuid4().hex[:10]

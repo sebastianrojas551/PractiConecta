@@ -6,7 +6,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 
 from .auth import CurrentUser, Database
-from .models import Application, ApplicationEvent, CompanyProfile, InternshipOffer, StudentProfile, User
+from .models import Application, ApplicationEvent, CompanyProfile, InternshipOffer, Proposal, StudentProfile, User
 from .schemas import ApplicationCreate, ApplicationUpdate, ApplicationView, OfferInput, OfferUpdate, OfferView
 
 
@@ -36,6 +36,7 @@ def offer_view(db, offer):
 
 
 def application_view(db, application, offer):
+    has_proposal = db.scalar(select(Proposal.id).where(Proposal.application_id == application.id)) is not None
     student = db.get(StudentProfile, application.student_id)
     company = db.get(CompanyProfile, offer.company_id)
     return ApplicationView.model_validate({
@@ -43,7 +44,9 @@ def application_view(db, application, offer):
         "message": application.message, "status": application.status, "created_at": application.created_at,
         "offer_title": offer.title, "company_name": company.razon_social if company and company.razon_social else "Empresa",
         "student_name": student.nombre if student else "Estudiante",
-        "allowed_statuses": APPLICATION_TRANSITIONS.get(application.status, []),
+        "allowed_statuses": [] if has_proposal else APPLICATION_TRANSITIONS.get(application.status, []),
+        "can_propose": not has_proposal and application.status in APPLICATION_TRANSITIONS,
+        "can_withdraw": not has_proposal and application.status in APPLICATION_TRANSITIONS,
     })
 
 
@@ -136,10 +139,12 @@ def offer_applications(offer_id: int, user: CurrentUser, db: Database):
 @router.patch("/postulaciones/{application_id}", response_model=ApplicationView)
 def update_application(application_id: int, data: ApplicationUpdate, user: CurrentUser, db: Database):
     require_role(user, "empresa")
-    row = db.execute(select(Application, InternshipOffer).join(InternshipOffer).where(Application.id == application_id)).first()
+    row = db.execute(select(Application, InternshipOffer).join(InternshipOffer).where(Application.id == application_id).with_for_update(of=Application)).first()
     if row is None or row[1].company_id != user.id:
         raise HTTPException(404, "No encontramos esta postulación.")
     application, offer = row
+    if db.scalar(select(Proposal.id).where(Proposal.application_id == application.id)):
+        raise HTTPException(409, "Esta postulación tiene una propuesta. Continúa en Propuestas de práctica.")
     if data.status not in APPLICATION_TRANSITIONS.get(application.status, []):
         raise HTTPException(409, "Ese cambio de estado no está permitido.")
     previous = application.status
@@ -154,10 +159,12 @@ def update_application(application_id: int, data: ApplicationUpdate, user: Curre
 @router.post("/postulaciones/{application_id}/retirar", response_model=ApplicationView)
 def withdraw_application(application_id: int, user: CurrentUser, db: Database):
     require_role(user, "estudiante")
-    row = db.execute(select(Application, InternshipOffer).join(InternshipOffer).where(Application.id == application_id)).first()
+    row = db.execute(select(Application, InternshipOffer).join(InternshipOffer).where(Application.id == application_id).with_for_update(of=Application)).first()
     if row is None or row[0].student_id != user.id:
         raise HTTPException(404, "No encontramos esta postulación.")
     application, offer = row
+    if db.scalar(select(Proposal.id).where(Proposal.application_id == application.id)):
+        raise HTTPException(409, "Esta postulación tiene una propuesta. Continúa en Propuestas de práctica.")
     if application.status not in {"enviada", "en_revision", "entrevista"}:
         raise HTTPException(409, "Esta postulación ya no se puede retirar.")
     previous = application.status

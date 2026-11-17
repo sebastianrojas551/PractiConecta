@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import date, datetime
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, Text, UniqueConstraint, func
+from sqlalchemy import CheckConstraint, Date, LargeBinary, DateTime, ForeignKey, Integer, Text, UniqueConstraint, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -109,4 +109,45 @@ class ApplicationEvent(Base):
     previous_status: Mapped[str | None] = mapped_column(Text)
     next_status: Mapped[str] = mapped_column(Text)
     comment: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Proposal(Base):
+    __tablename__ = "proposals"
+    __table_args__ = (
+        CheckConstraint("status IN ('pendiente', 'aceptada', 'rechazada')", name="valid_proposal_status"),
+        CheckConstraint("end_date >= start_date AND hours > 0", name="valid_proposal_terms"),
+        CheckConstraint("academic_status IN ('pendiente', 'en_tramite', 'autorizacion_informada', 'no_requerida', 'denegada')", name="valid_academic_status"),
+    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    application_id: Mapped[int] = mapped_column(ForeignKey("applications.id", ondelete="RESTRICT"), unique=True)
+    start_date: Mapped[date] = mapped_column(Date)
+    end_date: Mapped[date] = mapped_column(Date)
+    hours: Mapped[int] = mapped_column(Integer)
+    conditions: Mapped[str] = mapped_column(Text)
+    company_name: Mapped[str] = mapped_column(Text)
+    company_rut: Mapped[str | None] = mapped_column(Text)
+    representative: Mapped[str] = mapped_column(Text)
+    student_name: Mapped[str] = mapped_column(Text)
+    student_email: Mapped[str] = mapped_column(Text)
+    offer_title: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(Text, server_default="pendiente")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    responded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    academic_status: Mapped[str] = mapped_column(Text, server_default="pendiente")
+    academic_note: Mapped[str | None] = mapped_column(Text)
+    academic_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    evidence: Mapped[bytes | None] = mapped_column(LargeBinary)
+    evidence_sha256: Mapped[str | None] = mapped_column(Text)
+    letter_html: Mapped[str | None] = mapped_column(Text)
+    letter_issued_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class ProposalEvent(Base):
+    __tablename__ = "proposal_events"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    proposal_id: Mapped[int] = mapped_column(ForeignKey("proposals.id", ondelete="CASCADE"), index=True)
+    actor_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+    action: Mapped[str] = mapped_column(Text)
+    detail: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

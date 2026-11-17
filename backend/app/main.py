@@ -5,7 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
-from . import auth, offers, profiles
+from . import auth, offers, profiles, proposals
 from .auth import Database
 
 
@@ -13,6 +13,7 @@ app = FastAPI(title="PractiConecta", docs_url="/api/docs", openapi_url="/api/ope
 app.include_router(auth.router)
 app.include_router(profiles.router)
 app.include_router(offers.router)
+app.include_router(proposals.router)
 origin = os.getenv("APP_ORIGIN", "http://localhost:5173")
 
 

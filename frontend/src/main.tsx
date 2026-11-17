@@ -5,6 +5,7 @@ import { api, ApiError } from './api'
 import type { Account, Role } from './api'
 import { ProfileForm } from './profile'
 import { Opportunities } from './opportunities'
+import { Proposals } from './proposals'
 import './styles.css'
 
 function AuthForm({ onAccount }: { onAccount: (account: Account) => void }) {
@@ -115,9 +116,10 @@ function App() {
           ? <button onClick={() => void loadAccount()}>Reintentar</button>
           : <p role="status">Comprobando tu sesión…</p>)}
         {account === null && <AuthForm onAccount={next => { setError(''); setAccount(next) }} />}
-        {account && <nav className="app-nav"><a href="#perfil">Mi perfil</a><a href="#ofertas">Ofertas y postulaciones</a></nav>}
+        {account && <nav className="app-nav"><a href="#perfil">Mi perfil</a><a href="#ofertas">Ofertas y postulaciones</a><a href="#propuestas">Propuestas de práctica</a></nav>}
         {account && <div id="perfil"><ProfileForm key={account.email} account={account} onExpire={expireSession} /></div>}
         {account && <div id="ofertas"><Opportunities account={account} onExpire={expireSession} /></div>}
+        {account && <div id="propuestas"><Proposals key={account.email} account={account} /></div>}
       </main>
     </>
   )
