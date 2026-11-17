@@ -29,4 +29,12 @@ Con Docker Desktop activo y `.env` preparado en la copia local original:
 docker compose -p practiconecta-pct43-final --env-file ..\PractiConecta\.env -f compose.yaml -f scripts\compose.pct43.yaml up --build --wait
 ```
 
-El sitio queda en `http://localhost:5175`. Para frontend build: `docker compose -p practiconecta-pct43-final --env-file ..\PractiConecta\.env -f compose.yaml -f scripts\compose.pct43.yaml exec -T frontend npm run build`. Los scripts de navegador requieren Microsoft Edge y Playwright en el entorno local de pruebas.
+El sitio queda en `http://localhost:5175`. Para frontend build: `docker compose -p practiconecta-pct43-final --env-file ..\PractiConecta\.env -f compose.yaml -f scripts\compose.pct43.yaml exec -T frontend npm run build`. Para reproducir navegador, crear un entorno local e instalar la dependencia exclusiva de pruebas:
+
+```powershell
+python -m venv .local-check/pct43-browser-venv
+.local-check/pct43-browser-venv/Scripts/python -m pip install -r scripts/requirements-pct43-browser.txt
+.local-check/pct43-browser-venv/Scripts/python -X utf8 scripts/design_responsive.py
+```
+
+Se requiere Microsoft Edge instalado; Playwright no es dependencia de la aplicación.
