@@ -88,3 +88,84 @@ def test_company_and_student_access_are_scoped(clients):
     assert closed.status_code == 200, closed.text
     assert student.get("/api/ofertas").json() == []
     assert student.post(f"/api/ofertas/{offer['id']}/postulaciones", json={}).status_code == 404
+
+
+PATHS = {"enviada": [], "en_revision": ["en_revision"], "entrevista": ["entrevista"], "rechazada": ["rechazada"], "retirada": ["retirada"]}
+EXPECTED = {"enviada": ["en_revision", "entrevista", "rechazada"], "en_revision": ["entrevista", "rechazada"], "entrevista": ["rechazada"], "rechazada": [], "retirada": []}
+
+
+def application_at(clients, status):
+    company, student = clients
+    register(company, "empresa")
+    register(student, "estudiante")
+    offer = company.post("/api/ofertas", json=OFFER).json()
+    application = student.post(f"/api/ofertas/{offer['id']}/postulaciones", json={}).json()
+    path = f"/api/postulaciones/{application['id']}"
+    for step in PATHS[status]:
+        result = student.post(path + "/retirar") if step == "retirada" else company.patch(path, json={"status": step})
+        assert result.status_code == 200
+    return path
+
+
+@pytest.mark.parametrize("initial", PATHS)
+@pytest.mark.parametrize("target", ["en_revision", "entrevista", "rechazada"])
+def test_transition_matrix_and_history(clients, initial, target):
+    company, student = clients
+    path = application_at(clients, initial)
+    current = student.get("/api/estudiante/postulaciones").json()[0]
+    assert current["allowed_statuses"] == EXPECTED[initial]
+    before = student.get(path + "/historial").json()
+    response = company.patch(path, json={"status": target})
+    allowed = target in EXPECTED[initial]
+    assert response.status_code == (200 if allowed else 409)
+    after = student.get(path + "/historial").json()
+    assert len(after) == len(before) + int(allowed)
+    if allowed:
+        assert response.json()["allowed_statuses"] == EXPECTED[target]
+        assert after[-1]["previous_status"] == initial
+        assert after[-1]["next_status"] == target
+    else:
+        assert after == before
+        assert student.get("/api/estudiante/postulaciones").json()[0]["status"] == initial
+
+
+@pytest.mark.parametrize("initial", PATHS)
+def test_withdrawal_matrix(clients, initial):
+    company, student = clients
+    path = application_at(clients, initial)
+    response = student.post(path + "/retirar")
+    assert response.status_code == (200 if initial in {"enviada", "en_revision", "entrevista"} else 409)
+    if response.status_code == 200:
+        assert response.json()["allowed_statuses"] == []
+        assert company.patch(path, json={"status": "rechazada"}).status_code == 409
+
+
+@pytest.mark.parametrize("deadline,expected", [(None, 201), ("2026-11-16", 409), ("2026-11-17", 201), ("2026-11-18", 201)])
+def test_deadline_catalog_and_direct_application(clients, monkeypatch, deadline, expected):
+    from datetime import date
+    from app import offers
+    monkeypatch.setattr(offers, "today_in_chile", lambda: date(2026, 11, 17))
+    company, student = clients
+    register(company, "empresa")
+    register(student, "estudiante")
+    offer = company.post("/api/ofertas", json={**OFFER, "deadline": deadline}).json()
+    assert offer["deadline"] == deadline
+    assert (offer["id"] in [x["id"] for x in student.get("/api/ofertas").json()]) == (expected == 201)
+    response = student.post(f"/api/ofertas/{offer['id']}/postulaciones", json={})
+    assert response.status_code == expected
+    if expected == 409:
+        assert student.get("/api/estudiante/postulaciones").json() == []
+    assert company.get("/api/empresa/ofertas").json()[0]["id"] == offer["id"]
+
+
+def test_deadline_passes_while_page_is_open(clients, monkeypatch):
+    from datetime import date
+    from app import offers
+    monkeypatch.setattr(offers, "today_in_chile", lambda: date(2026, 11, 17))
+    company, student = clients
+    register(company, "empresa")
+    register(student, "estudiante")
+    offer = company.post("/api/ofertas", json={**OFFER, "deadline": "2026-11-17"}).json()
+    assert student.get("/api/ofertas").json()
+    monkeypatch.setattr(offers, "today_in_chile", lambda: date(2026, 11, 18))
+    assert student.post(f"/api/ofertas/{offer['id']}/postulaciones", json={}).status_code == 409

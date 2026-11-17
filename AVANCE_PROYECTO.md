@@ -2,6 +2,10 @@
 
 Este archivo permite que Codex, GitHub y el chat de seguimiento de Jira compartan evidencia. **No registra ejecución automática ni confirma código que no se haya comprobado.**
 
+## Estado actual
+
+Código publicado en `feat/PCT-14-integracion-aplicacion-local` mediante el commit `f22825306a71167765ded38dcf1d1640f800a3db`. [PR #1 abierto](https://github.com/sebastianrojas551/PractiConecta/pull/1), pendiente de merge y revisión del equipo. Las entradas siguientes preservan el estado histórico de cada sesión.
+
 ## Estado inicial — 17/11/2026
 
 - **Repositorio:** `sebastianrojas551/PractiConecta`, rama `main`.
@@ -50,3 +54,12 @@ Este archivo permite que Codex, GitHub y el chat de seguimiento de Jira comparta
 - **Seguridad/formato:** chequeo del índice sin rutas de secretos, bases de datos ni dependencias generadas. Escaneo heurístico: solo literales ficticios de contraseña en tests; no credenciales reales detectadas. `git diff --cached --check` limpio tras excluir los skills; sus archivos originales no fueron alterados.
 - **Advertencia:** deprecación httpx/Starlette en TestClient, no bloqueante. No se evaluó nuevamente la interfaz en navegador ni se afirma cobertura completa del MVP.
 - **Pendientes:** aprobación de revisión, configurar identidad Git con correo privado, commit, publicación de rama y PR. No se modificó Jira ni se hizo merge. Después de integrar, revisar PCT-26 a PCT-29 sobre lo existente para selección, aceptación e inicio de práctica, sin reconstruir funciones disponibles.
+
+### 2026-11-17 — PCT-14 — Correcciones de revisión del PR #1
+- **Responsable:** Sebastián Rojas / asistencia de Codex.
+- **Rama / PR:** `feat/PCT-14-integracion-aplicacion-local`; https://github.com/sebastianrojas551/PractiConecta/pull/1. Ajustes autorizados para publicar en la misma rama, sin merge ni nuevas tareas Jira.
+- **Cambios:** README y estado actual de esta bitácora actualizados; transiciones compartidas por la API con el selector React; controles de fecha límite inclusiva en Santiago, preservando fechas históricas; pruebas de estados finales, rechazos sin eventos adicionales, retiro, plazos y catálogo.
+- **PASÓ:** `python -m pytest -q`: 32 pruebas, una advertencia de deprecación httpx/Starlette. `alembic upgrade head` durante el arranque; `alembic current`: 0002 (head); `alembic check`: sin diferencias. `npm run build`: TypeScript y Vite correctos. Sin cambios de esquema ni nuevas dependencias.
+- **Persistencia PASÓ:** en el proyecto Docker aislado `practiconecta-p14-revision` se insertaron y confirmaron un usuario ficticio y su perfil en PostgreSQL. Se consultó un digest de ambos registros, se ejecutó `docker compose ... restart db backend` seguido de `up --wait backend`, y se repitió la consulta. El digest fue idéntico (`5676408531a7f5c759c8a960179f0b7a`); ambos servicios saludables. Solo se eliminaron después los registros ficticios de esta comprobación. No se tocó el volumen de la aplicación original.
+- **Reproducción de pruebas:** usar `docker compose -p practiconecta-p14-revision --env-file ../PractiConecta/.env` seguido de `up --build --wait backend`, `exec -T backend python -m pytest -q`, `exec -T backend alembic current`, `exec -T backend alembic check` y `run --build --rm --no-deps frontend npm run build`.
+- **Límites:** no se ejecutaron pruebas automatizadas de navegador; frontend comprobado por revisión de opciones alimentadas por la API y compilación. Persistencia comprobada para usuario/perfil tras reinicio de los servicios, no ante eliminación de volúmenes. No se afirma cobertura completa del MVP.

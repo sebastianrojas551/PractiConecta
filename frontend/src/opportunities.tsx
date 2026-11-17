@@ -9,7 +9,10 @@ type Offer = {
   modality: string; hours: number; vacancies: number; benefits: string | null
   deadline: string | null; status: string; created_at: string
 }
+const statusLabels: Record<string, string> = { en_revision: "En revisión", entrevista: "Entrevista", rechazada: "Rechazar" }
+
 type Application = {
+  allowed_statuses: string[]
   id: number; offer_id: number; student_id: number; message: string | null
   status: string; created_at: string; offer_title: string; company_name: string; student_name: string
 }
@@ -121,11 +124,11 @@ export function Opportunities({ account, onExpire }: { account: Account; onExpir
       {offers.length === 0 ? <p className="empty">{company ? 'Aún no publicas ofertas.' : 'No encontramos ofertas con esos filtros.'}</p> : offers.map(offer => <article className="offer" key={offer.id}>
         <div className="offer-title"><div><h2>{offer.title}</h2><p>{company ? offer.area : offer.company_name + ' · ' + offer.area}</p></div><span className={'pill ' + offer.status}>{offer.status}</span></div>
         <p>{offer.description}</p><p className="meta">{[offer.city, offer.region, offer.modality, offer.hours + ' horas', offer.vacancies + (offer.vacancies === 1 ? ' vacante' : ' vacantes')].filter(Boolean).join(' · ')}</p>
-        <details><summary>Requisitos y condiciones</summary><p>{offer.requirements}</p>{offer.benefits && <p>{offer.benefits}</p>}{offer.deadline && <p>Postulaciones hasta {offer.deadline}</p>}</details>
+        <details><summary>Requisitos y condiciones</summary><p>{offer.requirements}</p>{offer.benefits && <p>{offer.benefits}</p>}{offer.deadline && <p>Postulaciones hasta {offer.deadline} inclusive (hora de Santiago)</p>}</details>
         {company ? <div className="actions"><button className="secondary" onClick={() => void listApplicants(offer.id)}>Ver postulaciones</button>{offer.status === 'publicada' && <button className="secondary" onClick={() => void changeStatus(offer, 'pausada')}>Pausar</button>}{offer.status === 'pausada' && <button className="secondary" onClick={() => void changeStatus(offer, 'publicada')}>Reactivar</button>}{offer.status !== 'cerrada' && <button className="secondary" onClick={() => void changeStatus(offer, 'cerrada')}>Cerrar</button>}</div> : <button disabled={busy || applications.some(item => item.offer_id === offer.id)} onClick={() => void apply(offer.id)}>{applications.some(item => item.offer_id === offer.id) ? 'Ya postulaste' : 'Postular'}</button>}
       </article>)}
     </div>
     {!company && <section className="my-applications"><h2>Mis postulaciones</h2>{applications.length ? applications.map(item => <div className="application-row" key={item.id}><div><strong>{item.offer_title}</strong><p>{item.company_name}</p></div><span className="pill">{item.status.replace('_', ' ')}</span>{['enviada','en_revision','entrevista'].includes(item.status) && <button className="text-button" onClick={() => void withdraw(item.id)}>Retirar</button>}</div>) : <p>Aún no tienes postulaciones.</p>}</section>}
-    {company && selected !== null && <section className="my-applications"><div className="section-head"><h2>Postulaciones recibidas</h2><button className="secondary" onClick={() => setSelected(null)}>Cerrar</button></div>{applications.length ? applications.map(item => <div className="application-row" key={item.id}><div><strong>{item.student_name}</strong><p>{item.message || 'Sin mensaje'}</p></div><span className="pill">{item.status.replace('_', ' ')}</span><select aria-label="Estado de postulación" value={item.status} onChange={event => void updateApplication(item.id,event.target.value)}><option value={item.status}>{item.status.replace('_',' ')}</option><option value="en_revision">En revisión</option><option value="entrevista">Entrevista</option><option value="rechazada">Rechazar</option></select></div>) : <p>Aún no hay postulaciones para esta oferta.</p>}</section>}
+    {company && selected !== null && <section className="my-applications"><div className="section-head"><h2>Postulaciones recibidas</h2><button className="secondary" onClick={() => setSelected(null)}>Cerrar</button></div>{applications.length ? applications.map(item => <div className="application-row" key={item.id}><div><strong>{item.student_name}</strong><p>{item.message || 'Sin mensaje'}</p></div><span className="pill">{item.status.replace('_', ' ')}</span><select disabled={item.allowed_statuses.length === 0} aria-label="Estado de postulación" value={item.status} onChange={event => void updateApplication(item.id,event.target.value)}><option value={item.status}>{item.status.replace('_',' ')}</option>{item.allowed_statuses.map(status => <option key={status} value={status}>{statusLabels[status] ?? status}</option>)}</select></div>) : <p>Aún no hay postulaciones para esta oferta.</p>}</section>}
   </section>
 }

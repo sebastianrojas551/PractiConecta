@@ -134,6 +134,7 @@ class ApplicationView(BaseModel):
     offer_title: str
     company_name: str
     student_name: str
+    allowed_statuses: list[str]
 
 
 class ApplicationEventView(BaseModel):

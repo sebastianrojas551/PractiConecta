@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, time
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import func, or_, select
@@ -7,6 +8,18 @@ from sqlalchemy.exc import IntegrityError
 from .auth import CurrentUser, Database
 from .models import Application, ApplicationEvent, CompanyProfile, InternshipOffer, StudentProfile, User
 from .schemas import ApplicationCreate, ApplicationUpdate, ApplicationView, OfferInput, OfferUpdate, OfferView
+
+
+APPLICATION_TRANSITIONS = {"enviada": ["en_revision", "entrevista", "rechazada"], "en_revision": ["entrevista", "rechazada"], "entrevista": ["rechazada"]}
+
+
+def today_in_chile():
+    return datetime.now(ZoneInfo("America/Santiago")).date()
+
+
+def offer_expired(offer):
+    # deadline stores the calendar date encoded at UTC end-of-day, including legacy offers.
+    return offer.deadline is not None and offer.deadline.astimezone(UTC).date() < today_in_chile()
 
 
 router = APIRouter(prefix="/api", tags=["Ofertas y postulaciones"])
@@ -30,6 +43,7 @@ def application_view(db, application, offer):
         "message": application.message, "status": application.status, "created_at": application.created_at,
         "offer_title": offer.title, "company_name": company.razon_social if company and company.razon_social else "Empresa",
         "student_name": student.nombre if student else "Estudiante",
+        "allowed_statuses": APPLICATION_TRANSITIONS.get(application.status, []),
     })
 
 
@@ -48,7 +62,7 @@ def browse_offers(db: Database, q: str | None = Query(default=None, max_length=1
         query = query.where(InternshipOffer.region.ilike(f"%{region.strip()}%"))
     if modality:
         query = query.where(InternshipOffer.modality == modality)
-    return [offer_view(db, item) for item in db.scalars(query.order_by(InternshipOffer.created_at.desc())).all()]
+    return [offer_view(db, item) for item in db.scalars(query.order_by(InternshipOffer.created_at.desc())).all() if not offer_expired(item)]
 
 
 @router.post("/ofertas", response_model=OfferView, status_code=201)
@@ -87,6 +101,8 @@ def apply_to_offer(offer_id: int, data: ApplicationCreate, user: CurrentUser, db
     offer = db.get(InternshipOffer, offer_id)
     if offer is None or offer.status != "publicada":
         raise HTTPException(404, "Esta oferta no está disponible.")
+    if offer_expired(offer):
+        raise HTTPException(409, "El plazo para postular a esta oferta terminó.")
     application = Application(offer_id=offer.id, student_id=user.id, message=data.message)
     db.add(application)
     try:
@@ -124,8 +140,7 @@ def update_application(application_id: int, data: ApplicationUpdate, user: Curre
     if row is None or row[1].company_id != user.id:
         raise HTTPException(404, "No encontramos esta postulación.")
     application, offer = row
-    allowed = {"enviada": {"en_revision", "entrevista", "rechazada"}, "en_revision": {"entrevista", "rechazada"}, "entrevista": {"rechazada"}}
-    if data.status not in allowed.get(application.status, set()):
+    if data.status not in APPLICATION_TRANSITIONS.get(application.status, []):
         raise HTTPException(409, "Ese cambio de estado no está permitido.")
     previous = application.status
     application.status = data.status

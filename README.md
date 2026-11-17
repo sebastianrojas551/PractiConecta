@@ -3,7 +3,7 @@
 Plataforma web abierta para **buscar, postular, realizar y documentar prácticas profesionales en Chile**, conectando estudiantes con empresas. Desarrollo académico incremental.
 
 ## Estado actual
-**Código integrado localmente en `feat/PCT-14-integracion-aplicacion-local`, pendiente de publicación y revisión del equipo.** La copia de integración contiene FastAPI, React, PostgreSQL y Docker Compose. Pruebas locales reproducibles registradas en `AVANCE_PROYECTO.md`.
+**Código publicado en `feat/PCT-14-integracion-aplicacion-local`, en revisión mediante el [PR #1](https://github.com/sebastianrojas551/PractiConecta/pull/1) hacia `main`.** La copia de integración contiene FastAPI, React, PostgreSQL y Docker Compose. Pruebas locales reproducibles registradas en `AVANCE_PROYECTO.md`.
 
 ## Equipo
 - Sebastián Rojas
@@ -21,7 +21,7 @@ Plataforma web abierta para **buscar, postular, realizar y documentar prácticas
 2. Leer `AGENTS.md`, `ESPECIFICACION_PractiConecta.md`, `PLAN_INCREMENTAL_JIRA.md` y `AVANCE_PROYECTO.md`.
 3. Revisar la rama local de integración de PCT-14. No migrar FastAPI a Django sin decisión formal del equipo y del curso.
 4. Registrar cada avance verificable en `AVANCE_PROYECTO.md` y enlazar commits/PR usando la clave `PCT-XX`.
-5. Antes de publicar la rama, revisar los documentos conservados, `git status` y el resultado de las pruebas. Solicitar revisión del equipo.
+5. Revisar el PR #1 y sus pruebas antes de fusionarlo. Los ajustes se publican en la misma rama; el merge requiere revisión del equipo.
 
 ## Enlaces
 - [Repositorio](https://github.com/sebastianrojas551/PractiConecta)
@@ -48,3 +48,9 @@ La implementación actual cubre autenticación y perfiles de estudiante/empresa,
 ## Skills de diseño locales
 
 Los tres skills de diseño se conservan instalados localmente en `.agents/skills/`, excluidos de Git mientras se verifican sus licencias y recursos necesarios. No son dependencias de ejecución de PractiConecta y no se incluyen al clonar el repositorio. No copiar sus demos o recursos al producto sin revisar previamente su procedencia y condiciones de uso.
+
+## Postulaciones y fechas límite
+
+La empresa puede pasar de enviada a en revisión, entrevista o rechazada; de en revisión a entrevista o rechazada; y de entrevista a rechazada. Rechazada y retirada son estados finales. El estudiante puede retirar una postulación enviada, en revisión o en entrevista. La API informa las transiciones disponibles y el frontend muestra esas opciones.
+
+La fecha límite incluye todo el día indicado en `America/Santiago`. Las ofertas vencidas se excluyen del catálogo público y la API rechaza nuevas postulaciones con HTTP 409, incluso desde una pantalla abierta previamente. Sin fecha límite, una oferta publicada permanece disponible. La empresa conserva acceso a sus ofertas vencidas. Se mantiene la representación histórica de la fecha en la base de datos, sin migración de esquema.
