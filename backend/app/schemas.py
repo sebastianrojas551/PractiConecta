@@ -89,6 +89,20 @@ class OfferInput(Input):
     vacancies: int = Field(default=1, gt=0, le=10000, strict=True)
     benefits: LongText | None = None
     deadline: date | None = None
+    cv_required: bool = True
+    cover_letter_required: bool = False
+    additional_requirements: list[ShortText] = Field(default_factory=list, max_length=5)
+
+    @field_validator("additional_requirements")
+    @classmethod
+    def unique_additional_requirements(cls, values):
+        labels = [value.casefold() for value in values]
+        if len(labels) != len(set(labels)):
+            raise ValueError("Cada antecedente adicional debe tener un nombre distinto.")
+        reserved = {"cv", "curriculum", "currículum", "carta de presentación"}
+        if any(value in reserved for value in labels):
+            raise ValueError("CV y carta de presentación se configuran en sus campos propios.")
+        return values
 
 
 class OfferUpdate(OfferInput):
@@ -109,6 +123,9 @@ class OfferView(BaseModel):
     hours: int
     vacancies: int
     benefits: str | None
+    cv_required: bool
+    cover_letter_required: bool
+    additional_requirements: list[str]
     deadline: date | None
     status: str
     created_at: datetime
@@ -124,11 +141,27 @@ class ApplicationUpdate(Input):
     comment: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=1000)] | None = None
 
 
+class ApplicationDocumentView(BaseModel):
+    id: int
+    kind: Literal["cv", "carta_presentacion", "adicional"]
+    label: str
+    filename: str
+    content_type: Literal["application/pdf"]
+    size: int
+    sha256: str
+    version: int
+    is_current: bool
+    created_at: datetime
+
+
 class ApplicationView(BaseModel):
     id: int
     offer_id: int
     student_id: int
     message: str | None
+    cover_letter_text: str | None
+    profile_snapshot: dict[str, str | int | None]
+    documents: list[ApplicationDocumentView]
     status: str
     created_at: datetime
     offer_title: str

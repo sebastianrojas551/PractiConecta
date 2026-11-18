@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from sqlalchemy import CheckConstraint, Date, LargeBinary, DateTime, ForeignKey, Integer, Text, UniqueConstraint, func
+from sqlalchemy import JSON, CheckConstraint, Date, LargeBinary, DateTime, ForeignKey, Integer, Text, UniqueConstraint, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -78,6 +78,9 @@ class InternshipOffer(Base):
     hours: Mapped[int] = mapped_column(Integer)
     vacancies: Mapped[int] = mapped_column(Integer)
     benefits: Mapped[str | None] = mapped_column(Text)
+    cv_required: Mapped[bool] = mapped_column(default=True, server_default="true")
+    cover_letter_required: Mapped[bool] = mapped_column(default=False, server_default="false")
+    additional_requirements: Mapped[list[str]] = mapped_column(JSON, default=list, server_default="[]")
     deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     status: Mapped[str] = mapped_column(Text, server_default="publicada")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -95,6 +98,8 @@ class Application(Base):
     offer_id: Mapped[int] = mapped_column(ForeignKey("internship_offers.id", ondelete="CASCADE"), index=True)
     student_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     message: Mapped[str | None] = mapped_column(Text)
+    cover_letter_text: Mapped[str | None] = mapped_column(Text)
+    profile_snapshot: Mapped[dict] = mapped_column(JSON, default=dict, server_default="{}")
     status: Mapped[str] = mapped_column(Text, server_default="enviada")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
@@ -109,6 +114,29 @@ class ApplicationEvent(Base):
     previous_status: Mapped[str | None] = mapped_column(Text)
     next_status: Mapped[str] = mapped_column(Text)
     comment: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ApplicationDocument(Base):
+    __tablename__ = "application_documents"
+    __table_args__ = (
+        CheckConstraint("kind IN ('cv', 'carta_presentacion', 'adicional')", name="valid_application_document_kind"),
+        CheckConstraint("version > 0", name="positive_application_document_version"),
+        UniqueConstraint("application_id", "label", "version", name="unique_application_document_version"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    application_id: Mapped[int] = mapped_column(ForeignKey("applications.id", ondelete="CASCADE"), index=True)
+    uploaded_by: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+    kind: Mapped[str] = mapped_column(Text)
+    label: Mapped[str] = mapped_column(Text)
+    filename: Mapped[str] = mapped_column(Text)
+    content_type: Mapped[str] = mapped_column(Text)
+    content: Mapped[bytes] = mapped_column(LargeBinary)
+    sha256: Mapped[str] = mapped_column(Text)
+    size: Mapped[int] = mapped_column(Integer)
+    version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+    is_current: Mapped[bool] = mapped_column(default=True, server_default="true")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

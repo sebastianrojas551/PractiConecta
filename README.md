@@ -7,6 +7,8 @@ Plataforma web abierta para **buscar, postular, realizar y documentar prácticas
 
 El ajuste de PCT-22/PCT-23 en esta misma rama habilita editar ofertas propias desde el panel empresarial y filtrar el catálogo por modalidad con filtros persistidos en la URL. Se comprobó el acceso por rol en Edge, la edición y el catálogo en 390/768/1024/1440 px, la suite backend (50 pruebas), `alembic check` y la compilación frontend. El PR #4 continúa sujeto a la aprobación del PR #2.
 
+El incremento siguiente, PCT-24/PCT-25, está en trabajo local en `feat/PCT-24-25-postulaciones-documentos`, basada en el HEAD del PR #4 para conservar la navegación y evitar conflictos con Tailwind. Incorpora requisitos documentales por oferta, revisión del perfil y antecedentes antes de confirmar, cargas PDF privadas y aislamiento de candidaturas por propiedad. La carta de presentación del estudiante permanece separada de la carta empresarial de aceptación. PCT-30 se documenta como formalización futura del seguro escolar y autorización académica externa; no se declara ni certifica cobertura. Esta rama todavía no tiene commit ni PR.
+
 ## Equipo
 - Sebastián Rojas
 - Francisco Cartes
@@ -56,6 +58,14 @@ Los tres skills de diseño se conservan instalados localmente en `.agents/skills
 La empresa puede pasar de enviada a en revisión, entrevista o rechazada; de en revisión a entrevista o rechazada; y de entrevista a rechazada. Rechazada y retirada son estados finales. El estudiante puede retirar una postulación enviada, en revisión o en entrevista. La API informa las transiciones disponibles y el frontend muestra esas opciones.
 
 La fecha límite incluye todo el día indicado en `America/Santiago`. Las ofertas vencidas se excluyen del catálogo público y la API rechaza nuevas postulaciones con HTTP 409, incluso desde una pantalla abierta previamente. Sin fecha límite, una oferta publicada permanece disponible. La empresa conserva acceso a sus ofertas vencidas. Se mantiene la representación histórica de la fecha en la base de datos, sin migración de esquema.
+
+## Postulación y documentos — PCT-24 y PCT-25
+
+La empresa define en cada oferta si requiere CV PDF (requerido por defecto), carta de presentación y hasta cinco antecedentes adicionales nombrados. Los documentos adicionales configurados son requeridos para enviar esa candidatura. La carta del estudiante se puede redactar (máximo 5.000 caracteres) o adjuntar en PDF, sin enviar ambas. Antes de confirmar, el estudiante revisa la copia de perfil persistida y todos los nombres/archivos que se enviarán. Si el perfil cambia después de revisar, la API rechaza el envío para que actualice la revisión.
+
+PDF: 5 MiB máximo por archivo, hasta siete adjuntos y 20 MiB por solicitud. Se comprueban extensión, MIME, cabecera `%PDF-` y marcador `%%EOF`; estas comprobaciones básicas no certifican autenticidad ni seguridad del contenido. Los bytes y metadatos se guardan en PostgreSQL; cada descarga vuelve a comparar el tamaño y el hash SHA-256 antes de entregar el adjunto. Las ofertas anteriores a la migración 0004 mantienen CV/carta no requeridos y sin requisitos adicionales. Las postulaciones existentes conservan estado y mensaje, con fotografía de perfil vacía y sin documentos inventados. Solo el estudiante postulante y la empresa dueña de la oferta ven o descargan los documentos, mediante endpoints autenticados. Las respuestas de postulación solo contienen metadatos. El flujo conserva los estados y su trazabilidad actuales.
+
+El CV/carta de postulación del estudiante y la carta empresarial de aceptación son documentos distintos. La checklist futura PCT-30 podrá registrar autorización académica externa y situación del seguro escolar cuando corresponda; PractiConecta no emite, activa ni certifica autorización o cobertura.
 
 ## Propuesta y aceptación — PCT-26 a PCT-29
 

@@ -8,13 +8,14 @@ export class ApiError extends Error {
   }
 }
 
-export async function api<T>(path: string, method = 'GET', body?: object): Promise<T> {
+export async function api<T>(path: string, method = 'GET', body?: object | FormData): Promise<T> {
   let response: Response
   try {
+    const multipart = typeof FormData !== 'undefined' && body instanceof FormData
     response = await fetch('/api' + path, {
       method,
-      headers: body ? { 'Content-Type': 'application/json' } : undefined,
-      body: body ? JSON.stringify(body) : undefined,
+      headers: body && !multipart ? { 'Content-Type': 'application/json' } : undefined,
+      body: body ? multipart ? body : JSON.stringify(body) : undefined,
     })
   } catch {
     throw new Error('No pudimos conectar con PractiConecta. Intenta nuevamente.')
