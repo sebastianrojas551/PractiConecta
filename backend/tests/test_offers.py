@@ -14,6 +14,7 @@ OFFER = {
     "description": "Apoyo al desarrollo de una aplicación web.",
     "requirements": "Conocimientos iniciales de Python.", "city": "Talca", "region": "Maule",
     "modality": "híbrida", "hours": 280, "vacancies": 2, "benefits": "Aporte de movilización",
+    "cv_required": False, "cover_letter_required": False,
 }
 
 
