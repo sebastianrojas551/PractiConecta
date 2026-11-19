@@ -3,7 +3,9 @@
 Plataforma web abierta para **buscar, postular, realizar y documentar prácticas profesionales en Chile**, conectando estudiantes con empresas. Desarrollo académico incremental.
 
 ## Estado actual
-**La aplicación base está integrada en `main` mediante el [PR #1](https://github.com/sebastianrojas551/PractiConecta/pull/1), fusionado conservando sus commits.** Esta rama, `feat/PCT-26-propuestas-aceptacion`, incorpora el incremento PCT-26 a PCT-29 para revisión separada. Resultados reales en `AVANCE_PROYECTO.md`.
+**La aplicación base está integrada en `main` mediante el [PR #1](https://github.com/sebastianrojas551/PractiConecta/pull/1), fusionado conservando sus commits.** El incremento PCT-26 a PCT-29 sigue en el [PR #2](https://github.com/sebastianrojas551/PractiConecta/pull/2), abierto y sin fusionar. Este rediseño se prepara en `feat/PCT-43-redisenio-integral`, basado en el commit actual del PR #2 para mantener los flujos de propuestas mientras ese incremento espera revisión. No modifica ni fusiona los PR #2 o #3. Resultados reales en `AVANCE_PROYECTO.md`.
+
+El ajuste de PCT-22/PCT-23 en esta misma rama habilita editar ofertas propias desde el panel empresarial y filtrar el catálogo por modalidad con filtros persistidos en la URL. Se comprobó el acceso por rol en Edge, la edición y el catálogo en 390/768/1024/1440 px, la suite backend (50 pruebas), `alembic check` y la compilación frontend. El PR #4 continúa sujeto a la aprobación del PR #2.
 
 ## Equipo
 - Sebastián Rojas
@@ -19,9 +21,9 @@ Plataforma web abierta para **buscar, postular, realizar y documentar prácticas
 ## Cómo empezar con Codex
 1. Abrir este repositorio desde Codex (o clonarlo con Git).
 2. Leer `AGENTS.md`, `ESPECIFICACION_PractiConecta.md`, `PLAN_INCREMENTAL_JIRA.md` y `AVANCE_PROYECTO.md`.
-3. Revisar la rama local de integración de PCT-14. No migrar FastAPI a Django sin decisión formal del equipo y del curso.
+3. Revisar la rama de integración PCT-14 y el estado de los PR enlazados. No migrar FastAPI a Django sin decisión formal del equipo y del curso.
 4. Registrar cada avance verificable en `AVANCE_PROYECTO.md` y enlazar commits/PR usando la clave `PCT-XX`.
-5. El PR #1 ya está fusionado. Revisar el siguiente incremento antes de integrar su rama a `main`.
+5. El PR #1 está fusionado. El PR #2 y la propuesta visual previa del PR #3 siguen abiertos; revisar dependencias y no integrar sus ramas a `main` automáticamente.
 
 ## Enlaces
 - [Repositorio](https://github.com/sebastianrojas551/PractiConecta)
@@ -43,7 +45,7 @@ docker compose exec frontend npm run build
 
 Abre `http://localhost:5173`. La base PostgreSQL persiste en el volumen Compose `postgres_data`. Nunca agregues `.env`, credenciales o dependencias instaladas al repositorio.
 
-La implementación actual cubre autenticación y perfiles de estudiante/empresa, publicación y búsqueda de ofertas, postulaciones y cambios de estado auditados. Esta rama añade propuesta, aceptación/rechazo, autorización externa informada y carta empresarial. Práctica activa/seguimiento de horas (PCT-30 en adelante), evaluación y expediente PDF siguen pendientes.
+La implementación actual cubre autenticación y perfiles de estudiante/empresa, publicación y búsqueda de ofertas, postulaciones y cambios de estado auditados. El PR #2 añade propuesta, aceptación/rechazo, autorización externa informada y carta empresarial. La rama PCT-43 conserva esos flujos e incorpora navegación pública, catálogo, acceso y paneles con una identidad visual unificada. Práctica activa/seguimiento de horas (PCT-30 en adelante), evaluación y expediente PDF siguen pendientes.
 
 ## Skills de diseño locales
 
