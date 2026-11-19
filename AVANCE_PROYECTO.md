@@ -84,3 +84,11 @@ El PR #1 fue fusionado a `main` con merge commit `dddae72e2cb72599846a1005dbf2bc
 - **Límites y siguiente paso:** carta HTML imprimible, sin generador PDF de servidor; respaldo verificado estructuralmente de forma básica; no hay edición/renegociación de propuestas. Revisión del nuevo PR antes de merge. PCT-30 y actualización visual con skills permanecen para etapas posteriores.
 
 - **PR de revisión:** https://github.com/sebastianrojas551/PractiConecta/pull/2 (abierto, sin merge).
+
+### 2026-11-19 — PCT-28 — Integridad del respaldo de autorización
+- **Rama:** `feat/PCT-26-propuestas-aceptacion`, PR #2. Fix publicado en `d1d318c`.
+- **Hallazgo bloqueante:** `/api/propuestas/{id}/respaldo` restringía la descarga a las dos cuentas vinculadas y guardaba SHA-256 al cargar, pero no comparaba ese hash al servir los bytes. Una alteración posterior en base de datos podía descargarse sin aviso.
+- **Corrección:** la ruta autenticada compara SHA-256 antes de responder; si falta el hash o no coincide, devuelve error y no entrega los bytes. Añadí una prueba que corrompe el respaldo almacenado y verifica rechazo para estudiante y empresa vinculados. Se conserva el mismo flujo de carga, estado académico y autorización externa declarada.
+- **PASÓ:** `python -m pytest -q`: 50 pruebas (una advertencia conocida de Starlette/httpx); `alembic current`: 0003 (head); `alembic check`: sin operaciones nuevas. `git diff --check`: limpio.
+- **Alcance:** no hubo cambios frontend ni migraciones. No se modificaron las ramas fuente de PR #3, #4 ni #5; PR #4 y #5 todavía deben actualizarse/retargetearse después de integrar PR #2 para quitar los cambios heredados de sus diffs.
+- **Pendiente:** revisión de equipo del fix y del orden de integración. No se hizo merge ni se crearon tareas Jira.
