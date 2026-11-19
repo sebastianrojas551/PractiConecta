@@ -4,7 +4,7 @@ Este archivo permite que Codex, GitHub y el chat de seguimiento de Jira comparta
 
 ## Estado actual
 
-Código publicado en `feat/PCT-14-integracion-aplicacion-local` mediante el commit `f22825306a71167765ded38dcf1d1640f800a3db`. [PR #1 abierto](https://github.com/sebastianrojas551/PractiConecta/pull/1), pendiente de merge y revisión del equipo. Las entradas siguientes preservan el estado histórico de cada sesión.
+El PR #1 fue fusionado a `main` con merge commit `dddae72e2cb72599846a1005dbf2bc3002b53a29`, conservando los commits originales. La copia de integración se actualizó por fast-forward y se creó `feat/PCT-26-propuestas-aceptacion` desde ese `main`. El nuevo incremento queda sujeto a revisión independiente; no se fusiona automáticamente. Las entradas siguientes preservan el estado histórico de cada sesión.
 
 ## Estado inicial — 17/11/2026
 
@@ -69,3 +69,26 @@ Código publicado en `feat/PCT-14-integracion-aplicacion-local` mediante el comm
 - Se detectó y corrigió el acceso a `event.currentTarget` después de un await al publicar; se conserva la referencia al formulario antes de la solicitud. Repetición completa PASÓ. Compilación TypeScript/Vite PASÓ.
 - Evidencia reproducible: `scripts/browser_smoke.py` (Playwright en entorno de pruebas, Edge instalado, aplicación de prueba en puerto 5174; capturas en `.local-check/`). No añade dependencias de ejecución a la aplicación.
 - Autorización del usuario: fusionar PR #1 conservando commits una vez superada esta comprobación. Sin tareas Jira nuevas ni cambios al original/respaldo.
+
+### 2026-11-17 — PCT-26 a PCT-29 — Propuesta, aceptación y documentos
+- **Base y rama:** `main` en `dddae72`; rama nueva `feat/PCT-26-propuestas-aceptacion`. PR #1 fusionado con autorización después de superar el navegador; original y respaldo intactos.
+- **Jira consultado:** PCT-26 selección y condiciones; PCT-27 respuesta exclusiva del estudiante con fecha; PCT-28 declaración y respaldo privado; PCT-29 carta empresarial identificando emisor. Responsables observados: PCT-27 Sebastián Rojas, PCT-28 Francisco Cartes Vallejos; PCT-26 y PCT-29 sin asignar. No se modificaron campos ni se crearon tareas.
+- **Implementación:** FastAPI y React reutilizados; propuestas con condiciones/identidades conservadas, fechas y horas variables; respuesta definitiva; autorización externa independiente; PDF privado limitado a 2 MiB; carta empresarial HTML descargable e imprimible emitida exclusivamente por la empresa; auditoría de acciones. Migración 0003 y permisos por vínculo.
+- **Reglas:** una propuesta por postulación; se bloquean transiciones y retiro posteriores, con bloqueo de fila para serializar decisiones concurrentes. No hay práctica activa automática ni validación académica oficial. La carta no contiene firma inventada. El respaldo se entrega como adjunto, con comprobación básica PDF, sin afirmar validación documental o antivirus.
+- **Backend PASÓ:** 49 pruebas (incluyen 32 previas), permisos/aislamiento de documentos existentes, estados finales, entradas inválidas, respaldo limitado, emisión idempotente, contenido HTML escapado e historial. Una advertencia conocida de TestClient/httpx.
+- **Migraciones PASÓ:** instalación sobre PostgreSQL de prueba nuevo; upgrade 0002→0003 sobre volumen existente; downgrade 0003→0002 y upgrade head en volumen de tests vacío; current = 0003 (head); alembic check sin diferencias.
+- **Frontend/navegador PASÓ:** compilación TypeScript/Vite; Edge headless con scripts/browser_proposals.py completó registro/login de ambos roles, publicación, postulación, propuesta, aceptación, respaldo, declaración y descarga de carta. Se corrigieron dos selectores ambiguos del script durante su preparación. Se verificó que la opción Retirar desaparece al actualizar propuestas. Se corrigió contraste de botones secundarios sobre tarjetas para que su texto sea legible.
+- **Persistencia PASÓ:** reinicio real de db, backend y frontend en proyecto aislado practiconecta-p14-revision; cuatro propuestas de prueba, incluidas respuestas, PDF y HTML guardados, conservaron el digest agregado `f6408e61310aaf88ee6da63fae71f38f`. Servicios saludables después del reinicio.
+- **Reproducción:** README documenta pruebas de navegador aisladas; pytest y alembic check se ejecutaron con `docker compose -p practiconecta-p26-tests --env-file ../PractiConecta/.env exec -T backend ...`. No se copiaron secretos ni datos de usuario reales.
+- **Hallazgo pendiente:** npm audit reportó cuatro entradas altas heredadas por picomatch/fdir/tinyglobby/Vite; audit --omit=dev = 0. No se alteraron dependencias de aplicación ni se aplicó el downgrade mayor sugerido. Playwright solo se instaló en un entorno de comprobación aislado.
+- **Límites y siguiente paso:** carta HTML imprimible, sin generador PDF de servidor; respaldo verificado estructuralmente de forma básica; no hay edición/renegociación de propuestas. Revisión del nuevo PR antes de merge. PCT-30 y actualización visual con skills permanecen para etapas posteriores.
+
+- **PR de revisión:** https://github.com/sebastianrojas551/PractiConecta/pull/2 (abierto, sin merge).
+
+### 2026-11-19 — PCT-28 — Integridad del respaldo de autorización
+- **Rama:** `feat/PCT-26-propuestas-aceptacion`, PR #2. Fix publicado en `d1d318c`.
+- **Hallazgo bloqueante:** `/api/propuestas/{id}/respaldo` restringía la descarga a las dos cuentas vinculadas y guardaba SHA-256 al cargar, pero no comparaba ese hash al servir los bytes. Una alteración posterior en base de datos podía descargarse sin aviso.
+- **Corrección:** la ruta autenticada compara SHA-256 antes de responder; si falta el hash o no coincide, devuelve error y no entrega los bytes. Añadí una prueba que corrompe el respaldo almacenado y verifica rechazo para estudiante y empresa vinculados. Se conserva el mismo flujo de carga, estado académico y autorización externa declarada.
+- **PASÓ:** `python -m pytest -q`: 50 pruebas (una advertencia conocida de Starlette/httpx); `alembic current`: 0003 (head); `alembic check`: sin operaciones nuevas. `git diff --check`: limpio.
+- **Alcance:** no hubo cambios frontend ni migraciones. No se modificaron las ramas fuente de PR #3, #4 ni #5; PR #4 y #5 todavía deben actualizarse/retargetearse después de integrar PR #2 para quitar los cambios heredados de sus diffs.
+- **Pendiente:** revisión de equipo del fix y del orden de integración. No se hizo merge ni se crearon tareas Jira.

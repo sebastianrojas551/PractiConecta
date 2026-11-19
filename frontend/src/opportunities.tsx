@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { api, ApiError } from './api'
 import type { Account } from './api'
+import { ProposalForm } from './proposals'
 
 type Offer = {
   id: number; company_id: number; company_name: string; title: string; area: string
@@ -12,7 +13,7 @@ type Offer = {
 const statusLabels: Record<string, string> = { en_revision: "En revisión", entrevista: "Entrevista", rechazada: "Rechazar" }
 
 type Application = {
-  allowed_statuses: string[]
+  allowed_statuses: string[]; can_propose: boolean; can_withdraw: boolean
   id: number; offer_id: number; student_id: number; message: string | null
   status: string; created_at: string; offer_title: string; company_name: string; student_name: string
 }
@@ -26,6 +27,7 @@ export function Opportunities({ account, onExpire }: { account: Account; onExpir
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
+  const [proposing, setProposing] = useState<number | null>(null)
   const [selected, setSelected] = useState<number | null>(null)
 
   async function load() {
@@ -41,6 +43,11 @@ export function Opportunities({ account, onExpire }: { account: Account; onExpir
     }
   }
   useEffect(() => { void load() }, [account.role])
+  useEffect(() => {
+    const refresh = () => { void load(); if (company && selected !== null) void listApplicants(selected) }
+    window.addEventListener('applications-updated', refresh)
+    return () => window.removeEventListener('applications-updated', refresh)
+  }, [account.email, search, region, selected])
 
   async function submitOffer(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -129,7 +136,8 @@ export function Opportunities({ account, onExpire }: { account: Account; onExpir
         {company ? <div className="actions"><button className="secondary" onClick={() => void listApplicants(offer.id)}>Ver postulaciones</button>{offer.status === 'publicada' && <button className="secondary" onClick={() => void changeStatus(offer, 'pausada')}>Pausar</button>}{offer.status === 'pausada' && <button className="secondary" onClick={() => void changeStatus(offer, 'publicada')}>Reactivar</button>}{offer.status !== 'cerrada' && <button className="secondary" onClick={() => void changeStatus(offer, 'cerrada')}>Cerrar</button>}</div> : <button disabled={busy || applications.some(item => item.offer_id === offer.id)} onClick={() => void apply(offer.id)}>{applications.some(item => item.offer_id === offer.id) ? 'Ya postulaste' : 'Postular'}</button>}
       </article>)}
     </div>
-    {!company && <section className="my-applications"><h2>Mis postulaciones</h2>{applications.length ? applications.map(item => <div className="application-row" key={item.id}><div><strong>{item.offer_title}</strong><p>{item.company_name}</p></div><span className="pill">{item.status.replace('_', ' ')}</span>{['enviada','en_revision','entrevista'].includes(item.status) && <button className="text-button" onClick={() => void withdraw(item.id)}>Retirar</button>}</div>) : <p>Aún no tienes postulaciones.</p>}</section>}
-    {company && selected !== null && <section className="my-applications"><div className="section-head"><h2>Postulaciones recibidas</h2><button className="secondary" onClick={() => setSelected(null)}>Cerrar</button></div>{applications.length ? applications.map(item => <div className="application-row" key={item.id}><div><strong>{item.student_name}</strong><p>{item.message || 'Sin mensaje'}</p></div><span className="pill">{item.status.replace('_', ' ')}</span><select disabled={item.allowed_statuses.length === 0} aria-label="Estado de postulación" value={item.status} onChange={event => void updateApplication(item.id,event.target.value)}><option value={item.status}>{item.status.replace('_',' ')}</option>{item.allowed_statuses.map(status => <option key={status} value={status}>{statusLabels[status] ?? status}</option>)}</select></div>) : <p>Aún no hay postulaciones para esta oferta.</p>}</section>}
+    {!company && <section className="my-applications"><h2>Mis postulaciones</h2>{applications.length ? applications.map(item => <div className="application-row" key={item.id}><div><strong>{item.offer_title}</strong><p>{item.company_name}</p></div><span className="pill">{item.status.replace('_', ' ')}</span>{item.can_withdraw && <button className="text-button" onClick={() => void withdraw(item.id)}>Retirar</button>}</div>) : <p>Aún no tienes postulaciones.</p>}</section>}
+    {company && selected !== null && <section className="my-applications"><div className="section-head"><h2>Postulaciones recibidas</h2><button className="secondary" onClick={() => setSelected(null)}>Cerrar</button></div>{applications.length ? applications.map(item => <div className="application-row" key={item.id}><div><strong>{item.student_name}</strong><p>{item.message || 'Sin mensaje'}</p></div><span className="pill">{item.status.replace('_', ' ')}</span><select disabled={item.allowed_statuses.length === 0} aria-label="Estado de postulación" value={item.status} onChange={event => void updateApplication(item.id,event.target.value)}><option value={item.status}>{item.status.replace('_',' ')}</option>{item.allowed_statuses.map(status => <option key={status} value={status}>{statusLabels[status] ?? status}</option>)}</select>{item.can_propose && <button onClick={() => setProposing(item.id)}>Preparar propuesta</button>}</div>) : <p>Aún no hay postulaciones para esta oferta.</p>}</section>}
+    {proposing !== null && <ProposalForm applicationId={proposing} onClose={() => setProposing(null)} onCreated={() => { setProposing(null); void listApplicants(selected!); window.dispatchEvent(new Event("proposals-updated")) }} />}
   </section>
 }

@@ -1,0 +1,7 @@
+services:
+  backend:
+    environment:
+      APP_ORIGIN: http://localhost:5174
+  frontend:
+    ports: !override
+      - "127.0.0.1:5174:5173"
