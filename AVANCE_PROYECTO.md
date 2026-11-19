@@ -31,7 +31,6 @@ El PR #1 fue fusionado a `main` con merge commit `dddae72e2cb72599846a1005dbf2bc
 - **Siguiente paso:** 
 - **Estado de Jira observado o sugerido:** [no marcar Finalizado sin evidencia; no afirmar modificación automática]
 
-
 ### 2026-11-17 — PCT-14 — Integración local preparada
 - **Responsable:** Sebastián Rojas / asistencia de Codex.
 - **Rama / commit / PR:** `feat/PCT-14-integracion-aplicacion-local`; cambios locales sin commit ni push.
@@ -109,3 +108,17 @@ El PR #1 fue fusionado a `main` con merge commit `dddae72e2cb72599846a1005dbf2bc
 - **Evidencia local no versionada:** `.local-check/pct22-modal-edicion-1440.png`, `.local-check/pct23-filtros-movil-390.png`, `.local-check/pct23-filtros-escritorio-1440.png`.
 - **Limitación de verificación:** el aislamiento de propiedad entre empresas se comprobó mediante prueba de API; el navegador verificó los flujos de empresa y estudiante y la visibilidad de sus acciones.
 - **Integración:** publicado en el mismo PR #4 con los commits `a2dd9d1` (implementación y pruebas) y el commit de registro de esta actualización. PR #4 sigue abierto contra `feat/PCT-26-propuestas-aceptacion`; PR #2 también sigue abierto. PR #3 no se integró y no se modificó el backend de producción.
+### 2026-11-19 — PCT-28 — Integridad del respaldo de autorización
+- **Rama:** `feat/PCT-26-propuestas-aceptacion`, PR #2. Fix publicado en `d1d318c`.
+- **Hallazgo bloqueante:** `/api/propuestas/{id}/respaldo` restringía la descarga a las dos cuentas vinculadas y guardaba SHA-256 al cargar, pero no comparaba ese hash al servir los bytes. Una alteración posterior en base de datos podía descargarse sin aviso.
+- **Corrección:** la ruta autenticada compara SHA-256 antes de responder; si falta el hash o no coincide, devuelve error y no entrega los bytes. Añadí una prueba que corrompe el respaldo almacenado y verifica rechazo para estudiante y empresa vinculados. Se conserva el mismo flujo de carga, estado académico y autorización externa declarada.
+- **PASÓ:** `python -m pytest -q`: 50 pruebas (una advertencia conocida de Starlette/httpx); `alembic current`: 0003 (head); `alembic check`: sin operaciones nuevas. `git diff --check`: limpio.
+- **Alcance:** no hubo cambios frontend ni migraciones. No se modificaron las ramas fuente de PR #3, #4 ni #5; PR #4 y #5 todavía deben actualizarse/retargetearse después de integrar PR #2 para quitar los cambios heredados de sus diffs.
+- **Pendiente:** revisión de equipo del fix y del orden de integración. No se hizo merge ni se crearon tareas Jira.
+
+### 2026-11-19 — Integración y revalidación de PR #4
+- **PR #2 integrado:** merge commit `3045e54381e4cf50f95609e23130c92ea15e4463` en `main`, preservando el historial.
+- **Actualización de PR #4:** se integró `main` en `feat/PCT-43-redisenio-integral`. El conflicto de `AVANCE_PROYECTO.md` quedó resuelto conservando completas las entradas históricas PCT-43 y PCT-28; README combinó automáticamente la actualización de integridad del respaldo.
+- **PASÓ:** backend: 51 pruebas; una advertencia conocida Starlette/httpx. Alembic: `0003 (head)` y `alembic check` sin diferencias. Frontend: `npm run build` (TypeScript/Vite).
+- **PASÓ en Edge/Playwright con datos ficticios:** editar oferta con PUT, filtros de modalidad sincronizados con URL, visibilidad de acciones por rol, portada pública, registro, publicación, postulación, propuesta, aceptación, declaración académica externa y carta empresarial. Viewports 390/768/1024/1440 sin overflow.
+- **Estado:** PR #4 sigue abierto, retargeteado a `main`, pendiente de revisión del equipo. PR #5 sigue abierto y depende de PR #4 actualizado. PR #3 no se integró. No se crearon tareas Jira ni se hizo merge de PR #4.
