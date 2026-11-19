@@ -2,6 +2,8 @@ from fastapi.testclient import TestClient
 import pytest
 
 from app.main import app, origin
+from app.db import get_db
+from app.models import Proposal
 from test_offers import clients, register, OFFER
 
 TERMS = {"start_date": "2027-01-04", "end_date": "2027-03-31", "hours": 280,
@@ -60,6 +62,27 @@ def test_complete_proposal_authorization_letter_flow(clients):
     assert [e['action'] for e in events] == ['propuesta_enviada','respuesta','respaldo_cargado','autorizacion_informada_por_estudiante','carta_emitida']
     assert all(e['actor_id'] and e['created_at'] for e in events)
     assert student.put(path+'/respaldo', content=PDF, headers={'Content-Type': 'application/pdf'}).json()['academic_status'] == 'en_tramite'
+
+
+def test_academic_evidence_integrity_is_checked_before_private_download(clients):
+    company, student = clients
+    _, proposal_id = accept(clients)
+    path = f'/api/propuestas/{proposal_id}/respaldo'
+    assert student.put(path, content=PDF, headers={'Content-Type': 'application/pdf'}).status_code == 200
+    assert student.get(path).content == PDF
+    assert company.get(path).content == PDF
+
+    test_session_context = app.dependency_overrides[get_db]()
+    test_session = next(test_session_context)
+    try:
+        proposal = test_session.get(Proposal, proposal_id)
+        proposal.evidence = PDF + b'alterado'
+        test_session.commit()
+    finally:
+        test_session_context.close()
+
+    assert student.get(path).status_code == 500
+    assert company.get(path).status_code == 500
 
 
 @pytest.mark.parametrize('response', ['aceptada', 'rechazada'])

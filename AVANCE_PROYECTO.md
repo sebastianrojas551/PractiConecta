@@ -31,7 +31,6 @@ El PR #1 fue fusionado a `main` con merge commit `dddae72e2cb72599846a1005dbf2bc
 - **Siguiente paso:** 
 - **Estado de Jira observado o sugerido:** [no marcar Finalizado sin evidencia; no afirmar modificación automática]
 
-
 ### 2026-11-17 — PCT-14 — Integración local preparada
 - **Responsable:** Sebastián Rojas / asistencia de Codex.
 - **Rama / commit / PR:** `feat/PCT-14-integracion-aplicacion-local`; cambios locales sin commit ni push.
@@ -110,6 +109,7 @@ El PR #1 fue fusionado a `main` con merge commit `dddae72e2cb72599846a1005dbf2bc
 - **Limitación de verificación:** el aislamiento de propiedad entre empresas se comprobó mediante prueba de API; el navegador verificó los flujos de empresa y estudiante y la visibilidad de sus acciones.
 - **Integración:** publicado en el mismo PR #4 con los commits `a2dd9d1` (implementación y pruebas) y el commit de registro de esta actualización. PR #4 sigue abierto contra `feat/PCT-26-propuestas-aceptacion`; PR #2 también sigue abierto. PR #3 no se integró y no se modificó el backend de producción.
 
+
 ### 2026-11-17 — PCT-24 y PCT-25 — Antecedentes privados de postulación
 - **Responsable:** Sebastián Rojas / asistencia de Codex.
 - **Rama/base:** `feat/PCT-24-25-postulaciones-documentos`, creada en worktree aislado desde `feat/PCT-43-redisenio-integral` en `931b5f5` (HEAD del PR #4 al iniciar). PR #2, #3 y #4 no fueron modificados. Commit de implementación `d9c954c940c4ae75713cb44e31b218641c8b93ac`, publicado en el [PR #5](https://github.com/sebastianrojas551/PractiConecta/pull/5), hacia `feat/PCT-43-redisenio-integral` (base SHA `931b5f541655268e5d8b18b3f194db5bfe899ac5`). El PR depende de PCT-43 y su dependencia de PCT-26–29; no apunta a `main`.
@@ -126,3 +126,24 @@ El PR #1 fue fusionado a `main` con merge commit `dddae72e2cb72599846a1005dbf2bc
 - **PASÓ formato:** `git diff --check` sin errores; se verificó que el diff preparado no incluye `.env`, base de datos, dependencias generadas o archivos temporales.
 - **Errores/limitaciones:** la primera corrida Compose reutilizó un volumen de pruebas previo con credencial PostgreSQL distinta; se descartó para esta verificación y la suite pasó en un volumen nuevo. El navegador usó un proyecto aislado en puerto 5180 al detectar 5179 ocupado. No afecta la aplicación original. La revisión estructural de PDF no incluye análisis antivirus.
 - **Publicación:** se creó el commit `d9c954c940c4ae75713cb44e31b218641c8b93ac`, se publicó únicamente `feat/PCT-24-25-postulaciones-documentos` y se abrió el [PR #5](https://github.com/sebastianrojas551/PractiConecta/pull/5) hacia `feat/PCT-43-redisenio-integral`. PR #5 permanece abierto, sin merge. Los PR #2, #3 y #4 no se editaron. No se modificó Jira. Checkout original y respaldo intactos.
+### 2026-11-19 — PCT-28 — Integridad del respaldo de autorización
+- **Rama:** `feat/PCT-26-propuestas-aceptacion`, PR #2. Fix publicado en `d1d318c`.
+- **Hallazgo bloqueante:** `/api/propuestas/{id}/respaldo` restringía la descarga a las dos cuentas vinculadas y guardaba SHA-256 al cargar, pero no comparaba ese hash al servir los bytes. Una alteración posterior en base de datos podía descargarse sin aviso.
+- **Corrección:** la ruta autenticada compara SHA-256 antes de responder; si falta el hash o no coincide, devuelve error y no entrega los bytes. Añadí una prueba que corrompe el respaldo almacenado y verifica rechazo para estudiante y empresa vinculados. Se conserva el mismo flujo de carga, estado académico y autorización externa declarada.
+- **PASÓ:** `python -m pytest -q`: 50 pruebas (una advertencia conocida de Starlette/httpx); `alembic current`: 0003 (head); `alembic check`: sin operaciones nuevas. `git diff --check`: limpio.
+- **Alcance:** no hubo cambios frontend ni migraciones. No se modificaron las ramas fuente de PR #3, #4 ni #5; PR #4 y #5 todavía deben actualizarse/retargetearse después de integrar PR #2 para quitar los cambios heredados de sus diffs.
+- **Pendiente:** revisión de equipo del fix y del orden de integración. No se hizo merge ni se crearon tareas Jira.
+
+### 2026-11-19 — Integración y revalidación de PR #4
+- **PR #2 integrado:** merge commit `3045e54381e4cf50f95609e23130c92ea15e4463` en `main`, preservando el historial.
+- **Actualización de PR #4:** se integró `main` en `feat/PCT-43-redisenio-integral`. El conflicto de `AVANCE_PROYECTO.md` quedó resuelto conservando completas las entradas históricas PCT-43 y PCT-28; README combinó automáticamente la actualización de integridad del respaldo.
+- **PASÓ:** backend: 51 pruebas; una advertencia conocida Starlette/httpx. Alembic: `0003 (head)` y `alembic check` sin diferencias. Frontend: `npm run build` (TypeScript/Vite).
+- **PASÓ en Edge/Playwright con datos ficticios:** editar oferta con PUT, filtros de modalidad sincronizados con URL, visibilidad de acciones por rol, portada pública, registro, publicación, postulación, propuesta, aceptación, declaración académica externa y carta empresarial. Viewports 390/768/1024/1440 sin overflow.
+- **Estado:** PR #4 sigue abierto, retargeteado a `main`, pendiente de revisión del equipo. PR #5 sigue abierto y depende de PR #4 actualizado. PR #3 no se integró. No se crearon tareas Jira ni se hizo merge de PR #4.
+
+### 2026-11-19 — Actualización de PR #5 y validación integrada
+- **Base incorporada:** se integró la rama actualizada `feat/PCT-43-redisenio-integral` (`b7e7878`) en `feat/PCT-24-25-postulaciones-documentos`. El conflicto de `AVANCE_PROYECTO.md` se resolvió conservando las entradas PCT-24/25, PCT-28 y PCT-43; README se combinó sin conflicto.
+- **PASÓ:** 58 pruebas backend; una advertencia conocida Starlette/httpx. PostgreSQL alcanzó Alembic `0004 (head)` y `alembic check` no detectó operaciones nuevas. Compilación TypeScript/Vite correcta.
+- **PASÓ en Edge/Playwright con datos ficticios:** registro de ambos roles, oferta y requisitos, catálogo, postulación revisada con CV/carta/antecedente, revisión empresarial y descarga privada, selección, propuesta, aceptación, declaración externa, y carta empresarial separada. Viewports 390/768/1024/1440 sin overflow en ambos roles. Las pruebas backend verifican la restricción de documentos a las partes autorizadas y compatibilidad de postulaciones antiguas con 0004.
+- **PASÓ persistencia:** después del recorrido, PostgreSQL tenía 2 documentos asociados y 1 respaldo de propuesta; hashes coincidentes. Tras reiniciar PostgreSQL y API, permanecieron las asociaciones, bytes y hashes, y la migración siguió en 0004.
+- **Estado:** PR #5 se mantiene abierto contra `feat/PCT-43-redisenio-integral` actualizada. PR #4 sigue abierto contra `main`; ninguno se fusionó. PR #3 no se integró; no se crearon tareas Jira.
