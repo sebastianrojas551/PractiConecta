@@ -138,6 +138,8 @@ def download_evidence(proposal_id: int, user: CurrentUser, db: Database):
     proposal = authorized(proposal_id, user, db)
     if proposal.evidence is None:
         raise HTTPException(404, "No hay un respaldo adjunto.")
+    if proposal.evidence_sha256 is None or sha256(proposal.evidence).hexdigest() != proposal.evidence_sha256:
+        raise HTTPException(500, "No podemos entregar este respaldo porque su integridad no coincide.")
     return Response(proposal.evidence, media_type="application/pdf", headers={
         "Content-Disposition": f'attachment; filename="respaldo-{proposal.id}.pdf"',
         "X-Content-Type-Options": "nosniff", "Content-Security-Policy": "sandbox"})
